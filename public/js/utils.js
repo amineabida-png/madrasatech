@@ -95,7 +95,18 @@ function goView(view) {
   const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces'};
   document.getElementById('breadcrumb').textContent = names[view]||view;
   // Load module
-  const loaders = {dashboard:loadDashboard,eleves:loadEleves,classes:loadClasses,professeurs:loadProfesseurs,notes:loadNotes,absences:loadAbsences,emploi:loadEmploi,paiements:loadPaiements,depenses:loadDepenses,annonces:loadAnnonces};
+  const loaders = {
+    dashboard:   () => typeof DashboardMod   !== 'undefined' && DashboardMod.init(),
+    eleves:      () => typeof ElevesMod      !== 'undefined' && ElevesMod.init(),
+    classes:     () => typeof ClassesMod     !== 'undefined' && ClassesMod.init(),
+    professeurs: () => typeof ProfesseursMod !== 'undefined' && ProfesseursMod.init(),
+    notes:       () => typeof NotesMod       !== 'undefined' && NotesMod.init(),
+    absences:    () => typeof AbsencesMod    !== 'undefined' && AbsencesMod.init(),
+    emploi:      () => typeof EmploiMod      !== 'undefined' && EmploiMod.init(),
+    paiements:   () => typeof PaiementsMod   !== 'undefined' && PaiementsMod.init(),
+    depenses:    () => typeof DepensesMod    !== 'undefined' && DepensesMod.init(),
+    annonces:    () => typeof AnnoncesMod    !== 'undefined' && AnnoncesMod.init(),
+  };
   if(loaders[view]) loaders[view]();
 }
 
