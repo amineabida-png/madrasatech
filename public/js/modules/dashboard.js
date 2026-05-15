@@ -4,7 +4,7 @@ async function loadDashboard() {
   v.innerHTML = `<div class="stats-grid">${[1,2,3,4,5].map(()=>`<div class="stat-card"><div class="skeleton" style="width:50px;height:50px;border-radius:12px"></div><div><div class="skeleton" style="width:80px;height:28px;border-radius:6px;margin-bottom:6px"></div><div class="skeleton" style="width:100px;height:14px;border-radius:4px"></div></div></div>`).join('')}</div>`;
   
   try {
-    const s = await API.getStats();
+    const s = await api.getStats();
     
     v.innerHTML = `
     <div class="page-header">

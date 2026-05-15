@@ -6,7 +6,7 @@ async function loadEleves() {
   v.innerHTML = `<div class="page-header"><div><div class="page-title">👨‍🎓 Élèves</div></div><button class="btn btn-primary" onclick="modalEleve()">+ Ajouter élève</button></div><div class="card"><div class="card-body" style="text-align:center;padding:40px"><div class="skeleton" style="height:200px;border-radius:8px"></div></div></div>`;
   
   try {
-    const [eleves, classes] = await Promise.all([API.getEleves(), API.getClasses()]);
+    const [eleves, classes] = await Promise.all([api.getEleves(), api.getClasses()]);
     _eleves = eleves || [];
     document.getElementById('badge-eleves').textContent = _eleves.filter(e=>e.statut==='actif').length;
     renderEleves(classes);
@@ -76,10 +76,10 @@ function renderEleves(classesList) {
 }
 
 async function modalEleve(id=null) {
-  const [classes] = await Promise.all([API.getClasses()]);
+  const [classes] = await Promise.all([api.getClasses()]);
   let e = {};
   if (id) {
-    try { e = await API.getEleve(id); } catch {}
+    try { e = await api.getEleve(id); } catch {}
   }
   const classOpts = (classes||[]).map(c=>`<option value="${c.nom}" ${e.classe===c.nom?'selected':''}>${c.nom}</option>`).join('');
 
@@ -124,8 +124,8 @@ async function saveEleve(id) {
   if (id) data.statut = document.getElementById('eStatut').value;
   if (!data.prenom || !data.nom) { toast('Prénom et nom requis','err'); return; }
   try {
-    if (id) { await API.updateEleve(id, data); toast('Élève modifié','ok'); }
-    else { await API.createEleve(data); toast('Élève ajouté','ok'); }
+    if (id) { await api.updateEleve(id, data); toast('Élève modifié','ok'); }
+    else { await api.createEleve(data); toast('Élève ajouté','ok'); }
     closeModal();
     loadEleves();
   } catch(e) { toast(e.message,'err'); }
@@ -133,12 +133,12 @@ async function saveEleve(id) {
 
 async function supprimerEleve(id, nom) {
   if (!confirm(`Supprimer ${nom} ?`)) return;
-  try { await API.deleteEleve(id); toast('Élève supprimé','ok'); loadEleves(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteEleve(id); toast('Élève supprimé','ok'); loadEleves(); } catch(e) { toast(e.message,'err'); }
 }
 
 async function voirEleve(id) {
   try {
-    const e = await API.getEleve(id);
+    const e = await api.getEleve(id);
     const moy1 = calculMoyenne(e.notes, 1);
     const moy2 = calculMoyenne(e.notes, 2);
     const moy3 = calculMoyenne(e.notes, 3);
@@ -234,7 +234,7 @@ function switchTab(e, id) {
 
 async function imprimerBulletin(eleveId, trimestre) {
   try {
-    const b = await API.getBulletin(eleveId, trimestre);
+    const b = await api.getBulletin(eleveId, trimestre);
     const html = `
     <div class="print-bulletin" style="font-family:Arial,sans-serif;padding:20px">
       <div style="text-align:center;border-bottom:2px solid #1a56db;padding-bottom:16px;margin-bottom:20px">

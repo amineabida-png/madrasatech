@@ -2,7 +2,7 @@
 async function loadClasses() {
   const v = document.getElementById('view-classes');
   try {
-    const classes = await API.getClasses();
+    const classes = await api.getClasses();
     v.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">🏫 Classes</div><div class="page-sub">${classes.length} classe(s)</div></div>
@@ -63,7 +63,7 @@ async function saveClasse(id) {
   };
   if (!data.nom) { toast('Nom de la classe requis','err'); return; }
   try {
-    if (id) await API.updateClasse(id, data); else await API.createClasse(data);
+    if (id) await api.updateClasse(id, data); else await api.createClasse(data);
     toast(id?'Classe modifiée':'Classe créée','ok');
     closeModal(); loadClasses();
   } catch(e) { toast(e.message,'err'); }
@@ -71,5 +71,5 @@ async function saveClasse(id) {
 
 async function supprimerClasse(id, nom) {
   if (!confirm(`Supprimer la classe "${nom}" ?`)) return;
-  try { await API.deleteClasse(id); toast('Classe supprimée','ok'); loadClasses(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteClasse(id); toast('Classe supprimée','ok'); loadClasses(); } catch(e) { toast(e.message,'err'); }
 }

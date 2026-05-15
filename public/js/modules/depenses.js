@@ -2,7 +2,7 @@
 async function loadDepenses() {
   const v = document.getElementById('view-depenses');
   try {
-    const depenses = await API.getDepenses();
+    const depenses = await api.getDepenses();
     const total = depenses.reduce((a,d)=>a+d.montant,0);
     const parCat = {};
     depenses.forEach(d=>{parCat[d.categorie]=(parCat[d.categorie]||0)+d.montant;});
@@ -72,7 +72,7 @@ function filterDepenses() {
 async function modalDepense(id=null) {
   let d = {};
   if (id) {
-    try { const all = await API.getDepenses(); d = all.find(x=>x.id===id)||{}; } catch {}
+    try { const all = await api.getDepenses(); d = all.find(x=>x.id===id)||{}; } catch {}
   }
   const cats = [{v:'fournitures',l:'Fournitures de bureau'},{v:'charges',l:'Charges (eau, électricité)'},{v:'salaires',l:'Salaires & primes'},{v:'travaux',l:'Travaux & entretien'},{v:'pedagogique',l:'Matériel pédagogique'},{v:'autre',l:'Autre'}];
   
@@ -108,7 +108,7 @@ async function saveDepense(id) {
   if (!data.libelle) { toast('Libellé requis','err'); return; }
   if (data.montant<=0) { toast('Montant invalide','err'); return; }
   try {
-    if(id) await API.updateDepense(id,data); else await API.createDepense(data);
+    if(id) await api.updateDepense(id,data); else await api.createDepense(data);
     toast(id?'Dépense modifiée':'Dépense ajoutée','ok');
     closeModal(); loadDepenses();
   } catch(e) { toast(e.message,'err'); }
@@ -116,5 +116,5 @@ async function saveDepense(id) {
 
 async function supprimerDepense(id) {
   if (!confirm('Supprimer cette dépense ?')) return;
-  try { await API.deleteDepense(id); toast('Dépense supprimée','ok'); loadDepenses(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteDepense(id); toast('Dépense supprimée','ok'); loadDepenses(); } catch(e) { toast(e.message,'err'); }
 }

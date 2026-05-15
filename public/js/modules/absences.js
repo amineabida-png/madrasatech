@@ -2,7 +2,7 @@
 async function loadAbsences() {
   const v = document.getElementById('view-absences');
   try {
-    const [absences, classes, eleves] = await Promise.all([API.getAbsences(), API.getClasses(), API.getEleves()]);
+    const [absences, classes, eleves] = await Promise.all([api.getAbsences(), api.getClasses(), api.getEleves()]);
     const classOpts = classes.map(c=>`<option value="${c.nom}">${c.nom}</option>`).join('');
     const totalJust = absences.filter(a=>a.justifiee).length;
     const totalInjust = absences.filter(a=>!a.justifiee).length;
@@ -73,7 +73,7 @@ function filterAbsences() {
 }
 
 async function modalAbsence() {
-  const eleves = window._absEleves || await API.getEleves();
+  const eleves = window._absEleves || await api.getEleves();
   const matieres = ['Mathématiques','Français','Arabe','Anglais','SVT','Physique-Chimie','Histoire-Géo','Philosophie','Informatique','EPS'];
   
   openModal('+ Saisir une absence', `
@@ -113,7 +113,7 @@ async function saveAbsence() {
   if (!data.eleve_id) { toast('Sélectionnez un élève','err'); return; }
   if (!data.date_absence) { toast('Date requise','err'); return; }
   try {
-    await API.createAbsence(data);
+    await api.createAbsence(data);
     toast('Absence enregistrée','ok');
     closeModal(); loadAbsences();
   } catch(e) { toast(e.message,'err'); }
@@ -121,12 +121,12 @@ async function saveAbsence() {
 
 async function justifierAbsence(id) {
   try {
-    await API.updateAbsence(id, { justifiee: true, motif: 'Justifiée' });
+    await api.updateAbsence(id, { justifiee: true, motif: 'Justifiée' });
     toast('Absence justifiée','ok'); loadAbsences();
   } catch(e) { toast(e.message,'err'); }
 }
 
 async function supprimerAbsence(id) {
   if (!confirm('Supprimer cette absence ?')) return;
-  try { await API.deleteAbsence(id); toast('Absence supprimée','ok'); loadAbsences(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteAbsence(id); toast('Absence supprimée','ok'); loadAbsences(); } catch(e) { toast(e.message,'err'); }
 }

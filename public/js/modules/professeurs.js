@@ -2,7 +2,7 @@
 async function loadProfesseurs() {
   const v = document.getElementById('view-professeurs');
   try {
-    const profs = await API.getProfesseurs();
+    const profs = await api.getProfesseurs();
     v.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">👨‍🏫 Professeurs</div><div class="page-sub">${profs.length} professeur(s)</div></div>
@@ -44,7 +44,7 @@ async function loadProfesseurs() {
 
 async function modalProf(id=null) {
   let p = {};
-  if (id) { try { const all = await API.getProfesseurs(); p = all.find(x=>x.id===id)||{}; } catch {} }
+  if (id) { try { const all = await api.getProfesseurs(); p = all.find(x=>x.id===id)||{}; } catch {} }
   openModal((id?'✏️ Modifier':'+ Ajouter') + ' Professeur', `
   <div class="form-grid">
     <div class="form-group"><label class="form-label">Prénom *</label><input class="form-control" id="pPrenom" value="${p.prenom||''}"></div>
@@ -88,7 +88,7 @@ async function saveProf(id) {
   if(id) data.statut = document.getElementById('pStatut')?.value||'actif';
   if (!data.prenom || !data.nom) { toast('Prénom et nom requis','err'); return; }
   try {
-    if(id) await API.updateProfesseur(id,data); else await API.createProfesseur(data);
+    if(id) await api.updateProfesseur(id,data); else await api.createProfesseur(data);
     toast(id?'Professeur modifié':'Professeur ajouté','ok');
     closeModal(); loadProfesseurs();
   } catch(e) { toast(e.message,'err'); }
@@ -96,5 +96,5 @@ async function saveProf(id) {
 
 async function supprimerProf(id, nom) {
   if (!confirm(`Supprimer ${nom} ?`)) return;
-  try { await API.deleteProfesseur(id); toast('Professeur supprimé','ok'); loadProfesseurs(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteProfesseur(id); toast('Professeur supprimé','ok'); loadProfesseurs(); } catch(e) { toast(e.message,'err'); }
 }

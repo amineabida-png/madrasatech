@@ -4,7 +4,7 @@ let _notesFiltres = { classe:'', matiere:'', trimestre:'' };
 async function loadNotes() {
   const v = document.getElementById('view-notes');
   try {
-    const [classes, eleves] = await Promise.all([API.getClasses(), API.getEleves()]);
+    const [classes, eleves] = await Promise.all([api.getClasses(), api.getEleves()]);
     const classOpts = classes.map(c=>`<option value="${c.nom}">${c.nom}</option>`).join('');
     const matieres = ['Mathématiques','Français','Arabe','Anglais','SVT','Physique-Chimie','Histoire-Géo','Philosophie','Informatique','EPS'];
 
@@ -81,7 +81,7 @@ async function fetchNotes() {
   const params = qs({classe:_notesFiltres.classe,matiere:_notesFiltres.matiere,trimestre:_notesFiltres.trimestre});
   if(!params) return;
   try {
-    const notes = await API.getNotes(params);
+    const notes = await api.getNotes(params);
     const tbody = document.getElementById('notes-table-body');
     tbody.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Élève</th><th>Classe</th><th>Matière</th><th>Note</th><th>Coef</th><th>Trimestre</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead>
@@ -109,7 +109,7 @@ function switchNoteTab(e, id) {
 }
 
 async function modalNote() {
-  const [classes, eleves] = await Promise.all([API.getClasses(), API.getEleves()]);
+  const [classes, eleves] = await Promise.all([api.getClasses(), api.getEleves()]);
   const matieres = ['Mathématiques','Français','Arabe','Anglais','SVT','Physique-Chimie','Histoire-Géo','Philosophie','Informatique','EPS'];
   
   openModal('+ Saisir une note', `
@@ -196,7 +196,7 @@ async function saveNote() {
   if (!data.eleve_id) { toast('Sélectionnez un élève','err'); return; }
   if (isNaN(data.note)||data.note<0||data.note>20) { toast('Note invalide (0-20)','err'); return; }
   try {
-    await API.createNote(data);
+    await api.createNote(data);
     toast('Note enregistrée','ok');
     closeModal(); fetchNotes();
   } catch(e) { toast(e.message,'err'); }
@@ -204,7 +204,7 @@ async function saveNote() {
 
 async function supprimerNote(id) {
   if (!confirm('Supprimer cette note ?')) return;
-  try { await API.deleteNote(id); toast('Note supprimée','ok'); fetchNotes(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteNote(id); toast('Note supprimée','ok'); fetchNotes(); } catch(e) { toast(e.message,'err'); }
 }
 
 async function loadElevesForBulletin() {
@@ -219,7 +219,7 @@ async function previewBulletin() {
   const trimestre = document.getElementById('bTrimestre').value;
   if (!eleveId) { toast('Sélectionnez un élève','err'); return; }
   try {
-    const b = await API.getBulletin(eleveId, trimestre);
+    const b = await api.getBulletin(eleveId, trimestre);
     document.getElementById('bulletin-preview').innerHTML = `
     <div style="border:2px solid var(--primary);border-radius:12px;padding:20px">
       <h3 style="margin-bottom:12px;color:var(--primary)">📄 Bulletin — Trimestre ${trimestre}</h3>

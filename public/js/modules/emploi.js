@@ -2,7 +2,7 @@
 async function loadEmploi() {
   const v = document.getElementById('view-emploi');
   try {
-    const classes = await API.getClasses();
+    const classes = await api.getClasses();
     const classOpts = classes.map(c=>`<option value="${c.nom}">${c.nom}</option>`).join('');
     
     v.innerHTML = `
@@ -32,7 +32,7 @@ async function renderEDT() {
   const classe = document.getElementById('edtClasse').value;
   if (!classe) return;
   try {
-    const cours = await API.getEmploi(qs({classe}));
+    const cours = await api.getEmploi(qs({classe}));
     
     // Group by jour
     const byJour = {};
@@ -78,7 +78,7 @@ async function renderEDT() {
 
 async function modalCours() {
   const classes = window._edtClasses||[];
-  const profs = await API.getProfesseurs();
+  const profs = await api.getProfesseurs();
   const matieres = ['Mathématiques','Français','Arabe','Anglais','SVT','Physique-Chimie','Histoire-Géo','Philosophie','Informatique','EPS'];
   const selectedClasse = document.getElementById('edtClasse')?.value||'';
   
@@ -135,7 +135,7 @@ async function saveCours() {
     salle: document.getElementById('cSalle').value.trim(),
   };
   try {
-    await API.createCours(data);
+    await api.createCours(data);
     toast('Cours ajouté','ok');
     closeModal();
     if(document.getElementById('edtClasse')?.value===data.classe) renderEDT();
@@ -143,5 +143,5 @@ async function saveCours() {
 }
 
 async function supprimerCours(id) {
-  try { await API.deleteCours(id); toast('Cours supprimé','ok'); renderEDT(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteCours(id); toast('Cours supprimé','ok'); renderEDT(); } catch(e) { toast(e.message,'err'); }
 }

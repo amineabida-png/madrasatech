@@ -2,7 +2,7 @@
 async function loadPaiements() {
   const v = document.getElementById('view-paiements');
   try {
-    const [paiements, eleves] = await Promise.all([API.getPaiements(), API.getEleves()]);
+    const [paiements, eleves] = await Promise.all([api.getPaiements(), api.getEleves()]);
     const totalPaye = paiements.filter(p=>p.statut==='paye').reduce((a,p)=>a+p.montant,0);
     const totalImpaye = paiements.filter(p=>p.statut==='impaye').reduce((a,p)=>a+p.montant_du,0);
     const totalPartiel = paiements.filter(p=>p.statut==='partiel').reduce((a,p)=>a+p.montant,0);
@@ -75,7 +75,7 @@ function filterPaiements() {
 }
 
 async function modalPaiement() {
-  const eleves = window._paiementsEleves || await API.getEleves();
+  const eleves = window._paiementsEleves || await api.getEleves();
   const MOIS = ['Septembre','Octobre','Novembre','Décembre','Janvier','Février','Mars','Avril','Mai','Juin'];
   
   openModal('+ Enregistrer un paiement', `
@@ -135,7 +135,7 @@ async function savePaiement() {
   };
   if (!data.eleve_id) { toast('Sélectionnez un élève','err'); return; }
   try {
-    const r = await API.createPaiement(data);
+    const r = await api.createPaiement(data);
     toast(`Paiement enregistré (${r.statut})`, 'ok');
     closeModal(); loadPaiements();
   } catch(e) { toast(e.message,'err'); }
@@ -176,7 +176,7 @@ async function encaisser(id) {
     reference: document.getElementById('encRef').value.trim(),
   };
   try {
-    const r = await API.updatePaiement(id, data);
+    const r = await api.updatePaiement(id, data);
     toast(`Encaissement confirmé (${r.statut})`, 'ok');
     closeModal(); loadPaiements();
   } catch(e) { toast(e.message,'err'); }
