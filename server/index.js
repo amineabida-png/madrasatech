@@ -74,39 +74,26 @@ function createSqlJsAdapter(sqlJsDb, filePath) {
   };
 }
 
-// Try better-sqlite3 first (native, for Railway), fallback to sql.js
+// sql.js uniquement (pur JS, pas de compilation native)
+const initSqlJs = require('sql.js');
 let dbReady = false;
-try {
-  const Database = require('better-sqlite3');
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  dbReady = true;
-  console.log('✅ better-sqlite3 chargé');
-} catch(e) {
-  console.log('⚠️  better-sqlite3 indisponible, chargement sql.js...');
-  const initSqlJs = require('sql.js');
-  // Start server after sql.js is ready
-  initSqlJs().then(SQL => {
-    let sqlJsDb;
-    if (fs.existsSync(dbPath)) {
-      const fileBuffer = fs.readFileSync(dbPath);
-      sqlJsDb = new SQL.Database(fileBuffer);
-    } else {
-      sqlJsDb = new SQL.Database();
-    }
-    db = createSqlJsAdapter(sqlJsDb, dbPath);
-    initDB();
-    startServer();
-  }).catch(err => {
-    console.error('Erreur sql.js:', err);
-    process.exit(1);
-  });
-}
 
-if (dbReady) {
+initSqlJs().then(SQL => {
+  let sqlJsDb;
+  if (fs.existsSync(dbPath)) {
+    const fileBuffer = fs.readFileSync(dbPath);
+    sqlJsDb = new SQL.Database(fileBuffer);
+  } else {
+    sqlJsDb = new SQL.Database();
+  }
+  db = createSqlJsAdapter(sqlJsDb, dbPath);
+  console.log('✅ sql.js chargé');
   initDB();
-}
+  startServer();
+}).catch(err => {
+  console.error('Erreur sql.js:', err);
+  process.exit(1);
+});
 
 function initDB() {
   db.exec(`
@@ -762,4 +749,3 @@ function startServer() {
     console.log(`   Demo:  demo@madrasatech.ma  / demo2024`);
   });
 }
-if (dbReady) startServer();
