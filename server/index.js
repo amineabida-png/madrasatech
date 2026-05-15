@@ -272,6 +272,48 @@ function initDB() {
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
 
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      from_id INTEGER NOT NULL,
+      from_type TEXT NOT NULL,
+      to_id INTEGER,
+      to_type TEXT,
+      sujet TEXT NOT NULL,
+      contenu TEXT NOT NULL,
+      lu INTEGER DEFAULT 0,
+      parent_id INTEGER DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS calendrier (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      titre TEXT NOT NULL,
+      description TEXT,
+      type TEXT DEFAULT 'evenement',
+      date_debut TEXT NOT NULL,
+      date_fin TEXT,
+      heure_debut TEXT,
+      heure_fin TEXT,
+      couleur TEXT DEFAULT '#6366f1',
+      classes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      destinataire TEXT NOT NULL,
+      canal TEXT NOT NULL,
+      objet TEXT NOT NULL,
+      message TEXT NOT NULL,
+      statut TEXT DEFAULT 'en_attente',
+      envoye_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS annonces (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -351,6 +393,9 @@ function initDB() {
   } catch(e) { console.log('Migration school_users:', e.message); }
   try { db.exec(`CREATE TABLE IF NOT EXISTS devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, matiere TEXT NOT NULL, classe TEXT, date_limite TEXT, type TEXT DEFAULT 'devoir', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
   try { db.exec(`CREATE TABLE IF NOT EXISTS rendus_devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, devoir_id INTEGER NOT NULL, eleve_user_id INTEGER NOT NULL, contenu TEXT, fichier_nom TEXT, fichier_data TEXT, statut TEXT DEFAULT 'rendu', note REAL, commentaire_prof TEXT, rendu_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, from_id INTEGER NOT NULL, from_type TEXT NOT NULL, to_id INTEGER, to_type TEXT, sujet TEXT NOT NULL, contenu TEXT NOT NULL, lu INTEGER DEFAULT 0, parent_id INTEGER DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS calendrier (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, type TEXT DEFAULT 'evenement', date_debut TEXT NOT NULL, date_fin TEXT, heure_debut TEXT, heure_fin TEXT, couleur TEXT DEFAULT '#6366f1', classes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, destinataire TEXT NOT NULL, canal TEXT NOT NULL, objet TEXT NOT NULL, message TEXT NOT NULL, statut TEXT DEFAULT 'en_attente', envoye_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
   try { db.exec("CREATE TABLE IF NOT EXISTS school_users (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, nom TEXT NOT NULL, prenom TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, telephone TEXT, actif INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME)"); } catch(e) {}
 
   // Seed admin par défaut
@@ -1076,6 +1121,123 @@ app.get('/api/eleve-space/absences', auth, (req, res) => {
   const eleve = db.prepare('SELECT * FROM eleves WHERE email=?').get(req.user.email||'');
   if (!eleve) return res.json([]);
   res.json(db.prepare('SELECT * FROM absences WHERE eleve_id=? ORDER BY date_absence DESC').all(eleve.id));
+});
+
+
+// ════════════════════════════════════════════════════════════════
+// MESSAGERIE INTERNE
+// ════════════════════════════════════════════════════════════════
+app.get('/api/messages', auth, (req, res) => {
+  const { boite } = req.query;
+  let msgs;
+  if (boite === 'envoyes') {
+    msgs = db.prepare('SELECT * FROM messages WHERE owner_id=? AND from_id=? AND from_type="admin" ORDER BY created_at DESC').all(req.user.id, req.user.id);
+  } else {
+    msgs = db.prepare('SELECT * FROM messages WHERE owner_id=? AND (to_id=? OR to_id IS NULL) ORDER BY lu ASC, created_at DESC').all(req.user.id, req.user.id);
+  }
+  res.json(msgs);
+});
+
+app.get('/api/messages/non-lus', auth, (req, res) => {
+  const count = db.prepare('SELECT COUNT(*) as n FROM messages WHERE owner_id=? AND lu=0 AND (to_id=? OR to_id IS NULL)').get(req.user.id, req.user.id);
+  res.json({ count: count.n });
+});
+
+app.post('/api/messages', auth, (req, res) => {
+  const { to_id, to_type, sujet, contenu, parent_id } = req.body;
+  if (!sujet || !contenu) return res.status(400).json({ error: 'Sujet et contenu requis' });
+  db.prepare('INSERT INTO messages (owner_id,from_id,from_type,to_id,to_type,sujet,contenu,parent_id) VALUES (?,?,?,?,?,?,?,?)')
+    .run(req.user.id, req.user.id, req.user.role||'admin', to_id||null, to_type||'tous', sujet, contenu, parent_id||null);
+  res.json({ ok: true });
+});
+
+app.put('/api/messages/:id/lu', auth, (req, res) => {
+  db.prepare('UPDATE messages SET lu=1 WHERE id=? AND owner_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+app.delete('/api/messages/:id', auth, (req, res) => {
+  db.prepare('DELETE FROM messages WHERE id=? AND owner_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ════════════════════════════════════════════════════════════════
+// CALENDRIER SCOLAIRE
+// ════════════════════════════════════════════════════════════════
+app.get('/api/calendrier', auth, (req, res) => {
+  const { mois, annee } = req.query;
+  let q = 'SELECT * FROM calendrier WHERE owner_id=?';
+  const params = [req.user.id];
+  if (mois && annee) {
+    q += ' AND (strftime("%Y-%m", date_debut)=? OR strftime("%Y-%m", date_fin)=?)';
+    const ym = `${annee}-${String(mois).padStart(2,'0')}`;
+    params.push(ym, ym);
+  }
+  q += ' ORDER BY date_debut ASC';
+  res.json(db.prepare(q).all(...params));
+});
+
+app.post('/api/calendrier', auth, (req, res) => {
+  const { titre, description, type, date_debut, date_fin, heure_debut, heure_fin, couleur, classes } = req.body;
+  if (!titre || !date_debut) return res.status(400).json({ error: 'Titre et date requis' });
+  const r = db.prepare('INSERT INTO calendrier (owner_id,titre,description,type,date_debut,date_fin,heure_debut,heure_fin,couleur,classes) VALUES (?,?,?,?,?,?,?,?,?,?)')
+    .run(req.user.id, titre, description||'', type||'evenement', date_debut, date_fin||date_debut, heure_debut||'', heure_fin||'', couleur||'#6366f1', classes||'');
+  res.json({ ok: true, id: r.lastInsertRowid });
+});
+
+app.put('/api/calendrier/:id', auth, (req, res) => {
+  const { titre, description, type, date_debut, date_fin, heure_debut, heure_fin, couleur, classes } = req.body;
+  db.prepare('UPDATE calendrier SET titre=?,description=?,type=?,date_debut=?,date_fin=?,heure_debut=?,heure_fin=?,couleur=?,classes=? WHERE id=? AND owner_id=?')
+    .run(titre, description||'', type, date_debut, date_fin||date_debut, heure_debut||'', heure_fin||'', couleur||'#6366f1', classes||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+app.delete('/api/calendrier/:id', auth, (req, res) => {
+  db.prepare('DELETE FROM calendrier WHERE id=? AND owner_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// ════════════════════════════════════════════════════════════════
+// CERTIFICATS & DOCUMENTS
+// ════════════════════════════════════════════════════════════════
+app.get('/api/certificats/eleve/:id', auth, (req, res) => {
+  const eleve = db.prepare('SELECT e.*, u.school FROM eleves e JOIN users u ON u.id=e.user_id WHERE e.id=? AND e.user_id=?').get(req.params.id, req.user.id);
+  if (!eleve) return res.status(404).json({ error: 'Élève non trouvé' });
+  const user  = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
+  const notes = db.prepare('SELECT * FROM notes WHERE eleve_id=? AND user_id=? ORDER BY trimestre,matiere').all(eleve.id, req.user.id);
+  const paiements = db.prepare('SELECT * FROM paiements WHERE eleve_id=? ORDER BY created_at DESC').all(eleve.id);
+  const absences  = db.prepare('SELECT COUNT(*) as n FROM absences WHERE eleve_id=?').get(eleve.id);
+  res.json({ eleve, school: user, notes, paiements, absences: absences.n });
+});
+
+// ════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ════════════════════════════════════════════════════════════════
+app.get('/api/notifications', auth, (req, res) => {
+  const notifs = db.prepare('SELECT * FROM notifications WHERE owner_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id);
+  res.json(notifs);
+});
+
+app.post('/api/notifications/envoyer', auth, (req, res) => {
+  const { destinataire, canal, objet, message, statut } = req.body;
+  if (!destinataire || !canal || !objet || !message) return res.status(400).json({ error: 'Champs requis manquants' });
+  db.prepare('INSERT INTO notifications (owner_id,destinataire,canal,objet,message,statut,envoye_at) VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)')
+    .run(req.user.id, destinataire, canal, objet, message, statut||'envoye');
+  res.json({ ok: true });
+});
+
+app.post('/api/notifications/bulk', auth, (req, res) => {
+  const { cible, canal, objet, message } = req.body;
+  if (!cible || !canal || !objet || !message) return res.status(400).json({ error: 'Champs requis' });
+  // Récupérer les destinataires selon la cible
+  let eleves = [];
+  if (cible === 'tous' || cible === 'parents') {
+    eleves = db.prepare('SELECT nom,prenom,telephone,email FROM eleves WHERE user_id=?').all(req.user.id);
+  }
+  const count = eleves.length || 1;
+  db.prepare('INSERT INTO notifications (owner_id,destinataire,canal,objet,message,statut,envoye_at) VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)')
+    .run(req.user.id, `${cible} (${count} destinataires)`, canal, objet, message, 'envoye');
+  res.json({ ok: true, count });
 });
 
 // ── DEMANDES TEST ─────────────────────────────────────────────
