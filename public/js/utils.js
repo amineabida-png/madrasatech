@@ -1,16 +1,18 @@
 /* utils.js — Utilitaires MadrasaTech */
 
-// Toast notifications
-function toast(msg, type='ok') {
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
-  const ico = type==='ok'?'✅':type==='err'?'❌':'ℹ️';
+  const ico = type==='success'||type==='ok' ? '✅' : type==='error'||type==='err' ? '❌' : 'ℹ️';
   el.innerHTML = `<span>${ico}</span><span>${msg}</span>`;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
+// alias
+function toast(msg, type='ok') { showToast(msg, type==='err'?'error':type==='ok'?'success':type); }
 
-// Modal
+// ── Modal ─────────────────────────────────────────────────────
 function openModal(title, bodyHtml, large=false) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = bodyHtml;
@@ -19,7 +21,7 @@ function openModal(title, bodyHtml, large=false) {
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
-// Format
+// ── Formatage ─────────────────────────────────────────────────
 function fmtDate(d) { if(!d) return '—'; try { return new Date(d).toLocaleDateString('fr-MA',{day:'2-digit',month:'2-digit',year:'numeric'}); } catch { return d; } }
 function fmtMoney(n) { return Number(n||0).toLocaleString('fr-MA') + ' MAD'; }
 function fmtNote(n) { const v=parseFloat(n); return isNaN(v)?'—':v.toFixed(2)+'/20'; }
@@ -30,54 +32,38 @@ function mention(n) {
   if(n>=10) return '<span class="badge badge-amber">Passable</span>';
   return '<span class="badge badge-rose">Insuffisant</span>';
 }
-
-// Avatar initials
-function initials(nom, prenom='') {
-  return ((prenom||'').charAt(0)+(nom||'').charAt(0)).toUpperCase();
-}
+function initials(nom, prenom='') { return ((prenom||'').charAt(0)+(nom||'').charAt(0)).toUpperCase(); }
 const avColors = ['av-blue','av-green','av-amber','av-rose'];
 function avColor(id) { return avColors[(id||0)%4]; }
-
-// Confirm dialog
-function confirm(msg) { return window.confirm(msg); }
-
-// Build query string
 function qs(obj) {
   const p = new URLSearchParams();
   Object.entries(obj).forEach(([k,v]) => { if(v!==undefined&&v!==null&&v!=='') p.set(k,v); });
-  const s = p.toString();
-  return s ? '?'+s : '';
+  const s = p.toString(); return s ? '?'+s : '';
 }
 
-// CSV export
+// ── CSV export ────────────────────────────────────────────────
 function exportCSV(rows, filename) {
-  if (!rows.length) return toast('Aucune donnée à exporter', 'err');
+  if (!rows.length) return showToast('Aucune donnée à exporter', 'error');
   const headers = Object.keys(rows[0]);
   const lines = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))];
   const blob = new Blob(['\ufeff'+lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  toast('Export CSV réussi', 'ok');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  showToast('Export CSV réussi', 'success');
 }
 
-// Print
+// ── Print ─────────────────────────────────────────────────────
 function printZone(html) {
   const z = document.getElementById('print-zone');
-  z.innerHTML = html;
-  z.style.display = 'block';
-  window.print();
-  z.style.display = 'none';
-  z.innerHTML = '';
+  z.innerHTML = html; z.style.display = 'block'; window.print(); z.style.display = 'none'; z.innerHTML = '';
 }
 
-// Sidebar & nav
+// ── Sidebar ───────────────────────────────────────────────────
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('overlay').classList.toggle('show');
 }
 
+// ── Navigation ────────────────────────────────────────────────
 let currentView = 'dashboard';
 function nav(el) {
   event.preventDefault();
@@ -88,13 +74,15 @@ function nav(el) {
 
 function goView(view) {
   currentView = view;
+  localStorage.setItem('mt_active_section', view);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-'+view);
   if (target) target.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l => l.classList.toggle('active', l.dataset.view===view));
-  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces'};
-  document.getElementById('breadcrumb').textContent = names[view]||view;
-  // Load module
+  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces',parametres:'Paramètres',superadmin:'Super Admin'};
+  const bc = document.getElementById('breadcrumb');
+  if (bc) bc.textContent = names[view]||view;
+
   const loaders = {
     dashboard:   () => typeof DashboardMod   !== 'undefined' && DashboardMod.init(),
     eleves:      () => typeof ElevesMod      !== 'undefined' && ElevesMod.init(),
@@ -106,11 +94,12 @@ function goView(view) {
     paiements:   () => typeof PaiementsMod   !== 'undefined' && PaiementsMod.init(),
     depenses:    () => typeof DepensesMod    !== 'undefined' && DepensesMod.init(),
     annonces:    () => typeof AnnoncesMod    !== 'undefined' && AnnoncesMod.init(),
+    superadmin:  () => typeof SuperAdminMod  !== 'undefined' && SuperAdminMod.init(),
   };
   if(loaders[view]) loaders[view]();
 }
 
-// Global search
+// ── Recherche globale ─────────────────────────────────────────
 let searchTimeout;
 async function globalSearch() {
   clearTimeout(searchTimeout);
@@ -119,27 +108,32 @@ async function globalSearch() {
   if(q.length < 2) { results.classList.remove('show'); return; }
   searchTimeout = setTimeout(async () => {
     try {
-      const eleves = await API.getEleves(qs({search:q}));
+      const eleves = await api.get('/eleves'+qs({search:q}));
       if(!eleves||!eleves.length) { results.innerHTML='<div class="search-item">Aucun résultat</div>'; results.classList.add('show'); return; }
       results.innerHTML = eleves.slice(0,6).map(e => `
-        <div class="search-item" onclick="goView('eleves');results.classList.remove('show');document.getElementById('globalSearch').value=''">
+        <div class="search-item" onclick="goView('eleves');document.getElementById('searchResults').classList.remove('show');document.getElementById('globalSearch').value=''">
           <div class="avatar av-blue">${initials(e.nom,e.prenom)}</div>
-          <div><strong>${e.prenom} ${e.nom}</strong><br><small style="color:var(--muted)">${e.classe||'—'} · ${e.massar||''}</small></div>
+          <div><strong>${e.prenom} ${e.nom}</strong><br><small>${e.classe||'—'}</small></div>
         </div>`).join('');
       results.classList.add('show');
     } catch {}
   }, 300);
 }
-document.addEventListener('click', e => { if(!e.target.closest('.search-wrap')) document.getElementById('searchResults').classList.remove('show'); });
+document.addEventListener('click', e => {
+  const sr = document.getElementById('searchResults');
+  if (sr && !e.target.closest('.search-wrap')) sr.classList.remove('show');
+});
 
-// Settings modal
+// ── Settings modal ────────────────────────────────────────────
 function showSettings() {
+  const schoolEl = document.getElementById('schoolName');
+  const currentSchool = schoolEl ? schoolEl.textContent : '';
   openModal('⚙️ Paramètres', `
     <div class="settings-section">
       <div class="settings-title">Informations de l'établissement</div>
       <div class="form-group">
         <label class="form-label">Nom de l'école</label>
-        <input class="form-control" id="settSchool" placeholder="Nom de l'école">
+        <input class="form-control" id="settSchool" placeholder="Nom de l'école" value="${currentSchool}">
       </div>
     </div>
     <div class="settings-section">
@@ -153,26 +147,32 @@ function showSettings() {
       <button class="btn btn-primary" onclick="saveSettings()">Enregistrer</button>
     </div>
   `);
-  document.getElementById('settSchool').value = document.getElementById('schoolName').textContent;
 }
 
 async function saveSettings() {
   const school = document.getElementById('settSchool').value.trim();
   const old = document.getElementById('settPwOld').value;
-  const nw = document.getElementById('settPwNew').value;
-  const conf = document.getElementById('settPwConf').value;
-  
+  const nw  = document.getElementById('settPwNew').value;
+  const conf= document.getElementById('settPwConf').value;
   if (school) {
-    try { await API.updateSchool(school); document.getElementById('schoolName').textContent=school; document.getElementById('topSchool').textContent=school; toast('École mise à jour','ok'); } catch(e) { toast(e.message,'err'); }
+    try {
+      await api.put('/auth/school', { school_name: school });
+      const s1 = document.getElementById('schoolName'); if(s1) s1.textContent = school;
+      const s2 = document.getElementById('topSchool');  if(s2) s2.textContent = school;
+      showToast('École mise à jour','success');
+    } catch(e) { showToast(e.message,'error'); }
   }
   if (old || nw) {
-    if (nw !== conf) { toast('Les mots de passe ne correspondent pas','err'); return; }
-    try { await API.changePassword(old, nw); toast('Mot de passe modifié','ok'); closeModal(); } catch(e) { toast(e.message,'err'); }
+    if (nw !== conf) { showToast('Les mots de passe ne correspondent pas','error'); return; }
+    try { await api.put('/auth/password', { current: old, nouveau: nw }); showToast('Mot de passe modifié','success'); closeModal(); }
+    catch(e) { showToast(e.message,'error'); }
   } else { closeModal(); }
 }
 
+// ── Logout ────────────────────────────────────────────────────
 async function logout() {
-  if (!confirm('Déconnexion ?')) return;
-  await API.logout();
-  localStorage.removeItem('mt_token'); window.location.href = '/login.html';
+  if (!window.confirm('Déconnexion ?')) return;
+  try { await api.post('/auth/logout', {}); } catch(e) {}
+  localStorage.removeItem('mt_token');
+  window.location.href = '/login.html';
 }

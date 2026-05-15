@@ -106,6 +106,7 @@ function initDB() {
       role TEXT DEFAULT 'admin',
       school TEXT DEFAULT 'Mon École',
       plan TEXT DEFAULT 'pro',
+      plan_expires TEXT DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_login DATETIME,
       is_demo INTEGER DEFAULT 0
@@ -738,6 +739,51 @@ app.get('/api/stats', auth, (req, res) => {
 });
 
 // ── CATCHALL → SPA ─────────────────────────────────────────────
+
+// ── SUPER ADMIN ROUTES ────────────────────────────────────────
+function isSuperAdmin(req, res, next) {
+  if (req.user.role !== 'superadmin') return res.status(403).json({ error: 'Accès refusé' });
+  next();
+}
+
+app.get('/api/superadmin/clients', auth, isSuperAdmin, (req, res) => {
+  const clients = db.prepare('SELECT id, nom, prenom, email, school, plan, plan_expires, created_at, last_login, is_demo FROM users WHERE role != ? ORDER BY created_at DESC').all('superadmin');
+  res.json(clients);
+});
+
+app.post('/api/superadmin/clients', auth, isSuperAdmin, (req, res) => {
+  const { school, email, password, plan } = req.body;
+  if (!school || !email || !password) return res.status(400).json({ error: 'Champs requis manquants' });
+  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  if (existing) return res.status(400).json({ error: 'Email déjà utilisé' });
+  const hash = bcrypt.hashSync(password, 10);
+  const expires = calcExpires(plan);
+  db.prepare('INSERT INTO users (nom, prenom, email, password, role, school, plan, plan_expires) VALUES (?,?,?,?,?,?,?,?)').run('Admin', school, email, hash, 'admin', school, 'pro', expires);
+  res.json({ ok: true });
+});
+
+app.post('/api/superadmin/activate', auth, isSuperAdmin, (req, res) => {
+  const { user_id, duree } = req.body;
+  const expires = calcExpires(duree);
+  db.prepare('UPDATE users SET plan_expires = ? WHERE id = ?').run(expires, user_id);
+  res.json({ ok: true, expires });
+});
+
+app.delete('/api/superadmin/clients/:id', auth, isSuperAdmin, (req, res) => {
+  const id = req.params.id;
+  db.prepare('DELETE FROM users WHERE id = ? AND role != ?').run(id, 'superadmin');
+  res.json({ ok: true });
+});
+
+function calcExpires(duree) {
+  if (duree === 'vie') return '9999-12-31';
+  const now = new Date();
+  if (duree === 'test') now.setHours(now.getHours() + 24);
+  else if (duree === '30j') now.setDate(now.getDate() + 30);
+  else if (duree === '1an') now.setFullYear(now.getFullYear() + 1);
+  return now.toISOString().split('T')[0];
+}
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
