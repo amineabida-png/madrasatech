@@ -60,7 +60,7 @@ async function loadPaiements() {
     </div>`;
     window._paiements = paiements;
     window._paiementsEleves = eleves;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[paiements]', e); toast(e.message,'err'); }
 }
 
 function filterPaiements() {
@@ -138,7 +138,7 @@ async function savePaiement() {
     const r = await api.createPaiement(data);
     toast(`Paiement enregistré (${r.statut})`, 'ok');
     closeModal(); loadPaiements();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[paiements]', e); toast(e.message,'err'); }
 }
 
 function modalEncaisser(id, montantDu, eleve) {
@@ -179,5 +179,5 @@ async function encaisser(id) {
     const r = await api.updatePaiement(id, data);
     toast(`Encaissement confirmé (${r.statut})`, 'ok');
     closeModal(); loadPaiements();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[paiements]', e); toast(e.message,'err'); }
 }

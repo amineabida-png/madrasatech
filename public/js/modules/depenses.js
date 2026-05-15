@@ -59,7 +59,7 @@ async function loadDepenses() {
       </div>
     </div>`;
     window._depenses = depenses;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[depenses]', e); toast(e.message,'err'); }
 }
 
 function filterDepenses() {
@@ -111,10 +111,10 @@ async function saveDepense(id) {
     if(id) await api.updateDepense(id,data); else await api.createDepense(data);
     toast(id?'Dépense modifiée':'Dépense ajoutée','ok');
     closeModal(); loadDepenses();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[depenses]', e); toast(e.message,'err'); }
 }
 
 async function supprimerDepense(id) {
   if (!confirm('Supprimer cette dépense ?')) return;
-  try { await api.deleteDepense(id); toast('Dépense supprimée','ok'); loadDepenses(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteDepense(id); toast('Dépense supprimée','ok'); loadDepenses(); } catch(e) { console.error('[depenses]', e); toast(e.message,'err'); }
 }

@@ -39,7 +39,7 @@ async function loadProfesseurs() {
       </div>
     </div>`;
     window._profs = profs;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[professeurs]', e); toast(e.message,'err'); }
 }
 
 async function modalProf(id=null) {
@@ -91,10 +91,10 @@ async function saveProf(id) {
     if(id) await api.updateProfesseur(id,data); else await api.createProfesseur(data);
     toast(id?'Professeur modifié':'Professeur ajouté','ok');
     closeModal(); loadProfesseurs();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[professeurs]', e); toast(e.message,'err'); }
 }
 
 async function supprimerProf(id, nom) {
   if (!confirm(`Supprimer ${nom} ?`)) return;
-  try { await api.deleteProfesseur(id); toast('Professeur supprimé','ok'); loadProfesseurs(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteProfesseur(id); toast('Professeur supprimé','ok'); loadProfesseurs(); } catch(e) { console.error('[professeurs]', e); toast(e.message,'err'); }
 }

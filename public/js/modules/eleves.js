@@ -10,7 +10,7 @@ async function loadEleves() {
     _eleves = eleves || [];
     document.getElementById('badge-eleves').textContent = _eleves.filter(e=>e.statut==='actif').length;
     renderEleves(classes);
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
 }
 
 function renderEleves(classesList) {
@@ -128,12 +128,12 @@ async function saveEleve(id) {
     else { await api.createEleve(data); toast('Élève ajouté','ok'); }
     closeModal();
     loadEleves();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
 }
 
 async function supprimerEleve(id, nom) {
   if (!confirm(`Supprimer ${nom} ?`)) return;
-  try { await api.deleteEleve(id); toast('Élève supprimé','ok'); loadEleves(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteEleve(id); toast('Élève supprimé','ok'); loadEleves(); } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
 }
 
 async function voirEleve(id) {
@@ -212,7 +212,7 @@ async function voirEleve(id) {
       </tbody></table>
     </div>
     `, true);
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
 }
 
 function calculMoyenne(notes, trimestre) {
@@ -264,5 +264,5 @@ async function imprimerBulletin(eleveId, trimestre) {
       </div>
     </div>`;
     printZone(html);
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
 }

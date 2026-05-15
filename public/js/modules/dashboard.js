@@ -92,5 +92,5 @@ async function loadDashboard() {
     // Update badge
     document.getElementById('badge-eleves').textContent = s.totalEleves;
 
-  } catch(e) { v.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-title">Erreur de chargement</div><div class="empty-sub">${e.message}</div></div>`; }
+  } catch(e) { console.error('[dashboard]', e); v.innerHTML = `<div style="padding:3rem;text-align:center;color:#ef4444"><div style="font-size:3rem">⚠️</div><div style="font-size:1.1rem;font-weight:700;margin:1rem 0">Erreur module dashboard</div><div style="color:#64748b">${e.message}</div></div>`; }
 }

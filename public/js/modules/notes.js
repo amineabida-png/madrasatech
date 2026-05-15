@@ -74,7 +74,7 @@ async function loadNotes() {
     </div>`;
     
     window._elevesForNotes = eleves;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[notes]', e); toast(e.message,'err'); }
 }
 
 async function fetchNotes() {
@@ -98,7 +98,7 @@ async function fetchNotes() {
           <td><button class="btn btn-sm btn-danger btn-icon" onclick="supprimerNote(${n.id})">🗑</button></td>
         </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">Aucune note trouvée</td></tr>'}
       </tbody></table></div>`;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[notes]', e); toast(e.message,'err'); }
 }
 
 function switchNoteTab(e, id) {
@@ -199,12 +199,12 @@ async function saveNote() {
     await api.createNote(data);
     toast('Note enregistrée','ok');
     closeModal(); fetchNotes();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[notes]', e); toast(e.message,'err'); }
 }
 
 async function supprimerNote(id) {
   if (!confirm('Supprimer cette note ?')) return;
-  try { await api.deleteNote(id); toast('Note supprimée','ok'); fetchNotes(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteNote(id); toast('Note supprimée','ok'); fetchNotes(); } catch(e) { console.error('[notes]', e); toast(e.message,'err'); }
 }
 
 async function loadElevesForBulletin() {
@@ -238,7 +238,7 @@ async function previewBulletin() {
       </div>
     </div>`;
     window._lastBulletin = b;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[notes]', e); toast(e.message,'err'); }
 }
 
 function printBulletinSelected() {

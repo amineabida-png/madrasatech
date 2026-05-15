@@ -21,7 +21,7 @@ async function loadEmploi() {
       </div>
     </div>`;
     window._edtClasses = classes;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[emploi]', e); toast(e.message,'err'); }
 }
 
 const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
@@ -73,7 +73,7 @@ async function renderEDT() {
         </tbody>
       </table>
     </div>`;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[emploi]', e); toast(e.message,'err'); }
 }
 
 async function modalCours() {
@@ -139,9 +139,9 @@ async function saveCours() {
     toast('Cours ajouté','ok');
     closeModal();
     if(document.getElementById('edtClasse')?.value===data.classe) renderEDT();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[emploi]', e); toast(e.message,'err'); }
 }
 
 async function supprimerCours(id) {
-  try { await api.deleteCours(id); toast('Cours supprimé','ok'); renderEDT(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteCours(id); toast('Cours supprimé','ok'); renderEDT(); } catch(e) { console.error('[emploi]', e); toast(e.message,'err'); }
 }

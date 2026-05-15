@@ -14,7 +14,7 @@ const api = {
     if (r.status === 401) {
       localStorage.removeItem('mt_token');
       window.location.href = '/login.html';
-      return null;
+      throw new Error('Session expirée, reconnexion...');
     }
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Erreur serveur');

@@ -84,17 +84,17 @@ function goView(view) {
   if (bc) bc.textContent = names[view]||view;
 
   const loaders = {
-    dashboard:   () => typeof DashboardMod   !== 'undefined' && DashboardMod.init(),
-    eleves:      () => typeof ElevesMod      !== 'undefined' && ElevesMod.init(),
-    classes:     () => typeof ClassesMod     !== 'undefined' && ClassesMod.init(),
-    professeurs: () => typeof ProfesseursMod !== 'undefined' && ProfesseursMod.init(),
-    notes:       () => typeof NotesMod       !== 'undefined' && NotesMod.init(),
-    absences:    () => typeof AbsencesMod    !== 'undefined' && AbsencesMod.init(),
-    emploi:      () => typeof EmploiMod      !== 'undefined' && EmploiMod.init(),
-    paiements:   () => typeof PaiementsMod   !== 'undefined' && PaiementsMod.init(),
-    depenses:    () => typeof DepensesMod    !== 'undefined' && DepensesMod.init(),
-    annonces:    () => typeof AnnoncesMod    !== 'undefined' && AnnoncesMod.init(),
-    superadmin:  () => typeof SuperAdminMod  !== 'undefined' && SuperAdminMod.init(),
+    dashboard:   () => typeof loadDashboard   === 'function' && loadDashboard(),
+    eleves:      () => typeof loadEleves      === 'function' && loadEleves(),
+    classes:     () => typeof loadClasses     === 'function' && loadClasses(),
+    professeurs: () => typeof loadProfesseurs === 'function' && loadProfesseurs(),
+    notes:       () => typeof loadNotes       === 'function' && loadNotes(),
+    absences:    () => typeof loadAbsences    === 'function' && loadAbsences(),
+    emploi:      () => typeof loadEmploi      === 'function' && loadEmploi(),
+    paiements:   () => typeof loadPaiements   === 'function' && loadPaiements(),
+    depenses:    () => typeof loadDepenses    === 'function' && loadDepenses(),
+    annonces:    () => typeof AnnoncesMod !== 'undefined' ? AnnoncesMod.init() : typeof loadAnnonces === 'function' && loadAnnonces(),
+    superadmin:  () => typeof SuperAdminMod   !== 'undefined' && SuperAdminMod.init(),
   };
   if(loaders[view]) loaders[view]();
 }

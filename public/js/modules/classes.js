@@ -28,7 +28,7 @@ async function loadClasses() {
           </div>
         </div>`).join('') : `<div class="card" style="grid-column:1/-1"><div class="empty"><div class="empty-ico">🏫</div><div class="empty-title">Aucune classe</div><div class="empty-sub">Ajoutez votre première classe</div></div></div>`}
     </div>`;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[classes]', e); toast(e.message,'err'); }
 }
 
 function modalClasse(id=null, c={}) {
@@ -66,10 +66,10 @@ async function saveClasse(id) {
     if (id) await api.updateClasse(id, data); else await api.createClasse(data);
     toast(id?'Classe modifiée':'Classe créée','ok');
     closeModal(); loadClasses();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[classes]', e); toast(e.message,'err'); }
 }
 
 async function supprimerClasse(id, nom) {
   if (!confirm(`Supprimer la classe "${nom}" ?`)) return;
-  try { await api.deleteClasse(id); toast('Classe supprimée','ok'); loadClasses(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteClasse(id); toast('Classe supprimée','ok'); loadClasses(); } catch(e) { console.error('[classes]', e); toast(e.message,'err'); }
 }

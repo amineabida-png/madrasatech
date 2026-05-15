@@ -56,7 +56,7 @@ async function loadAbsences() {
       </div>
     </div>`;
     window._absEleves = eleves;
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[absences]', e); toast(e.message,'err'); }
 }
 
 function filterAbsences() {
@@ -116,17 +116,17 @@ async function saveAbsence() {
     await api.createAbsence(data);
     toast('Absence enregistrée','ok');
     closeModal(); loadAbsences();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[absences]', e); toast(e.message,'err'); }
 }
 
 async function justifierAbsence(id) {
   try {
     await api.updateAbsence(id, { justifiee: true, motif: 'Justifiée' });
     toast('Absence justifiée','ok'); loadAbsences();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { console.error('[absences]', e); toast(e.message,'err'); }
 }
 
 async function supprimerAbsence(id) {
   if (!confirm('Supprimer cette absence ?')) return;
-  try { await api.deleteAbsence(id); toast('Absence supprimée','ok'); loadAbsences(); } catch(e) { toast(e.message,'err'); }
+  try { await api.deleteAbsence(id); toast('Absence supprimée','ok'); loadAbsences(); } catch(e) { console.error('[absences]', e); toast(e.message,'err'); }
 }
