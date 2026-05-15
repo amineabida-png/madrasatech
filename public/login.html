@@ -30,12 +30,9 @@ input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,86,219,.4)}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
-.demo-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-top:20px}
-.demo-box h4{font-size:12px;font-weight:700;color:#065f46;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-.demo-cred{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px}
-.demo-cred span{color:#047857;font-family:monospace;font-weight:600}
-.demo-btn{font-size:11px;color:#1a56db;cursor:pointer;font-weight:600;border:1px solid #93c5fd;background:#eff6ff;padding:2px 8px;border-radius:6px;white-space:nowrap}
-.demo-btn:hover{background:#dbeafe}
+.test-btn{display:block;width:100%;margin-top:16px;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .2s,transform .1s;box-shadow:0 4px 15px rgba(245,158,11,0.35)}
+.test-btn:hover{opacity:.92;transform:translateY(-1px)}
+.test-btn:active{transform:translateY(0)}
 .footer-note{text-align:center;margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -61,17 +58,7 @@ input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
       <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password"/>
     </div>
     <button class="btn" id="btn" onclick="login()">Se connecter</button>
-    <div class="demo-box">
-      <h4>🔑 Comptes de démonstration</h4>
-      <div class="demo-cred">
-        <div>Admin : <span>admin@madrasatech.ma</span></div>
-        <div class="demo-btn" onclick="fill('admin@madrasatech.ma','admin2024')">Utiliser</div>
-      </div>
-      <div class="demo-cred">
-        <div>Demo : <span>demo@madrasatech.ma</span></div>
-        <div class="demo-btn" onclick="fill('demo@madrasatech.ma','demo2024')">Utiliser</div>
-      </div>
-    </div>
+    <a href="mailto:contact@madrasatech.ma?subject=Demande test 24h" class="test-btn">⏱ Testez gratuitement pendant 24h</a>
   </div>
   <div class="footer-note">© 2024 MadrasaTech · Conçu pour les écoles marocaines</div>
 </div>
