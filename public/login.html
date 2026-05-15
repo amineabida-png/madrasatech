@@ -8,10 +8,9 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --primary:#1a56db;--primary-dark:#1e429f;--primary-light:#ebf5ff;
-  --emerald:#059669;--amber:#d97706;--rose:#e11d48;
-  --bg:#f0f4f8;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;
-  --sidebar:#0f172a;--sidebar-accent:#1e293b;
+  --primary:#1a56db;--primary-dark:#1e429f;
+  --amber:#d97706;--rose:#e11d48;
+  --text:#1e293b;--muted:#64748b;--border:#e2e8f0;
 }
 body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1a56db 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .container{width:100%;max-width:420px}
@@ -24,18 +23,49 @@ h2{font-size:20px;font-weight:700;color:#1e293b;margin-bottom:6px}
 .card-sub{color:#64748b;font-size:13px;margin-bottom:28px}
 .field{margin-bottom:18px}
 label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
-input{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;transition:.2s;outline:none}
-input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+input,select,textarea{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;transition:.2s;outline:none;background:#fff;color:#1e293b}
+input:focus,select:focus,textarea:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+textarea{resize:none;height:80px}
 .btn{width:100%;padding:14px;background:linear-gradient(135deg,#1a56db,#1e429f);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;margin-top:8px}
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,86,219,.4)}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
-.test-btn{display:block;width:100%;margin-top:16px;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .2s,transform .1s;box-shadow:0 4px 15px rgba(245,158,11,0.35)}
+.test-btn{display:block;width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;text-align:center;transition:opacity .2s,transform .1s;box-shadow:0 4px 15px rgba(245,158,11,.35)}
 .test-btn:hover{opacity:.92;transform:translateY(-1px)}
-.test-btn:active{transform:translateY(0)}
 .footer-note{text-align:center;margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MODAL FORMULAIRE TEST ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .25s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:1.1rem;font-weight:800;color:#0f172a}
+.modal-head p{font-size:12px;color:#64748b;margin-top:2px}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;line-height:1}
+.modal-close:hover{color:#0f172a}
+.modal-body{padding:1.25rem 1.5rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.required{color:#ef4444}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid #f1f5f9;display:flex;gap:10px}
+.btn-cancel{flex:1;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;color:#64748b;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-cancel:hover{background:#f1f5f9}
+.btn-send{flex:2;padding:12px;background:linear-gradient(135deg,#1a56db,#1e429f);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-send:hover{opacity:.9;transform:translateY(-1px)}
+.btn-send:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.info-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:#1d4ed8;line-height:1.5}
+.info-banner strong{display:block;margin-bottom:3px;font-size:13px}
+/* Success state */
+.success-box{text-align:center;padding:2rem 1.5rem}
+.success-icon{font-size:4rem;margin-bottom:1rem}
+.success-title{font-size:1.2rem;font-weight:800;color:#0f172a;margin-bottom:.75rem}
+.success-msg{color:#64748b;font-size:13.5px;line-height:1.7;margin-bottom:1.5rem}
+.success-highlight{background:#fef9c3;border-radius:10px;padding:12px 16px;font-size:13px;color:#92400e;font-weight:600;margin-bottom:1.5rem}
+.btn-close-success{width:100%;padding:12px;background:linear-gradient(135deg,#1a56db,#1e429f);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -58,28 +88,185 @@ input:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
       <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password"/>
     </div>
     <button class="btn" id="btn" onclick="login()">Se connecter</button>
-    <a href="mailto:contact@madrasatech.ma?subject=Demande test 24h" class="test-btn">⏱ Testez gratuitement pendant 24h</a>
+    <button class="test-btn" onclick="openTestForm()">⏱ Testez gratuitement pendant 24h</button>
   </div>
-  <div class="footer-note">© 2024 MadrasaTech · Conçu pour les écoles marocaines</div>
+  <div class="footer-note">© 2025 MadrasaTech · Conçu pour les écoles marocaines</div>
 </div>
+
+<!-- ══ MODAL DEMANDE TEST ══ -->
+<div class="overlay" id="testOverlay" onclick="if(event.target===this)closeTestForm()">
+  <div class="modal" id="testModal">
+
+    <!-- ÉTAPE 1 : Formulaire -->
+    <div id="step-form">
+      <div class="modal-head">
+        <div>
+          <h3>⏱ Demande d'accès test 24h</h3>
+          <p>Remplissez le formulaire — accès activé après validation</p>
+        </div>
+        <button class="modal-close" onclick="closeTestForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-banner">
+          <strong>ℹ️ Comment ça marche ?</strong>
+          Après envoi de votre demande, notre équipe valide vos informations et active votre accès test 24h. Vous recevrez vos identifiants par téléphone ou email.
+        </div>
+
+        <div class="form-group">
+          <label>Nom de l'établissement <span class="required">*</span></label>
+          <input type="text" id="f-ecole" placeholder="Ex: Lycée Ibn Khaldoun, École Al Amal...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prénom <span class="required">*</span></label>
+            <input type="text" id="f-prenom" placeholder="Votre prénom">
+          </div>
+          <div class="form-group">
+            <label>Nom <span class="required">*</span></label>
+            <input type="text" id="f-nom" placeholder="Votre nom">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Téléphone <span class="required">*</span></label>
+            <input type="tel" id="f-tel" placeholder="06 00 00 00 00">
+          </div>
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" id="f-email" placeholder="vous@ecole.ma">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" id="f-ville" placeholder="Casablanca, Rabat...">
+          </div>
+          <div class="form-group">
+            <label>Nombre d'élèves</label>
+            <select id="f-eleves">
+              <option value="">Sélectionner</option>
+              <option value="moins50">Moins de 50</option>
+              <option value="50-150">50 à 150</option>
+              <option value="150-300">150 à 300</option>
+              <option value="plus300">Plus de 300</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Message (optionnel)</label>
+          <textarea id="f-message" placeholder="Questions, besoins spécifiques, horaires de disponibilité..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeTestForm()">Annuler</button>
+        <button class="btn-send" id="btn-send" onclick="sendTestRequest()">
+          ✅ Envoyer ma demande
+        </button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : Confirmation -->
+    <div id="step-success" style="display:none">
+      <div class="success-box">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">Demande envoyée avec succès !</div>
+        <div class="success-msg">
+          Votre demande d'accès test a bien été transmise à notre équipe.<br>
+          Nous allons vérifier vos informations et activer votre compte test.
+        </div>
+        <div class="success-highlight">
+          📞 Vous serez contacté(e) dans les plus brefs délais<br>
+          par téléphone ou email pour recevoir vos identifiants de connexion.
+        </div>
+        <div class="success-msg" style="font-size:12px;color:#94a3b8">
+          ⚠️ L'accès ne sera activé qu'après validation par l'administrateur MadrasaTech.
+        </div>
+        <button class="btn-close-success" onclick="closeTestForm()">Fermer</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-function fill(e,p){ document.getElementById('email').value=e; document.getElementById('pass').value=p; }
-document.getElementById('pass').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+// ── Connexion ──────────────────────────────────────────────────
+document.getElementById('pass').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
 
 async function login(){
-  const email=document.getElementById('email').value.trim();
-  const pass=document.getElementById('pass').value;
-  const err=document.getElementById('err');
-  const btn=document.getElementById('btn');
-  err.style.display='none';
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('pass').value;
+  const err   = document.getElementById('err');
+  const btn   = document.getElementById('btn');
+  err.style.display = 'none';
   if(!email||!pass){ err.textContent='Veuillez remplir tous les champs'; err.style.display='block'; return; }
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Connexion...';
-  try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
-    const data=await r.json();
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Connexion...';
+  try {
+    const r    = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const data = await r.json();
     if(r.ok){ localStorage.setItem('mt_token', data.token); window.location.href='/'; }
     else{ err.textContent=data.error||'Erreur de connexion'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
-  }catch(e){ err.textContent='Erreur réseau. Réessayez.'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
+  } catch(e){ err.textContent='Erreur réseau. Réessayez.'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
+}
+
+// ── Formulaire test ────────────────────────────────────────────
+function openTestForm(){
+  document.getElementById('step-form').style.display = 'block';
+  document.getElementById('step-success').style.display = 'none';
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('btn-send').innerHTML = '✅ Envoyer ma demande';
+  document.getElementById('testOverlay').classList.add('open');
+}
+function closeTestForm(){
+  document.getElementById('testOverlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeTestForm(); });
+
+async function sendTestRequest(){
+  const ecole   = document.getElementById('f-ecole').value.trim();
+  const prenom  = document.getElementById('f-prenom').value.trim();
+  const nom     = document.getElementById('f-nom').value.trim();
+  const tel     = document.getElementById('f-tel').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  const ville   = document.getElementById('f-ville').value.trim();
+  const eleves  = document.getElementById('f-eleves').value;
+  const message = document.getElementById('f-message').value.trim();
+
+  // Validation
+  if(!ecole)  { alert('Veuillez indiquer le nom de votre établissement.'); return; }
+  if(!prenom) { alert('Veuillez indiquer votre prénom.'); return; }
+  if(!nom)    { alert('Veuillez indiquer votre nom.'); return; }
+  if(!tel)    { alert('Veuillez indiquer votre téléphone.'); return; }
+  if(!email || !email.includes('@')) { alert('Veuillez indiquer un email valide.'); return; }
+
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Envoi en cours...';
+
+  try {
+    const r = await fetch('/api/demandes-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ecole, nom, prenom, telephone: tel, email, ville, nb_eleves: eleves, message })
+    });
+    const data = await r.json();
+    if(r.ok && data.ok){
+      // Afficher confirmation
+      document.getElementById('step-form').style.display = 'none';
+      document.getElementById('step-success').style.display = 'block';
+    } else {
+      alert(data.error || 'Erreur lors de l\'envoi. Réessayez.');
+      btn.disabled = false;
+      btn.innerHTML = '✅ Envoyer ma demande';
+    }
+  } catch(e){
+    alert('Erreur réseau. Vérifiez votre connexion et réessayez.');
+    btn.disabled = false;
+    btn.innerHTML = '✅ Envoyer ma demande';
+  }
 }
 </script>
 </body>

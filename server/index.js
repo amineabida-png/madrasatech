@@ -260,6 +260,20 @@ function initDB() {
       ip TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS demandes_test (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ecole TEXT NOT NULL,
+      nom TEXT NOT NULL,
+      prenom TEXT NOT NULL,
+      telephone TEXT NOT NULL,
+      email TEXT NOT NULL,
+      ville TEXT,
+      nb_eleves TEXT,
+      message TEXT,
+      statut TEXT DEFAULT 'en_attente',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Migration: ajouter plan_expires si absent
@@ -789,6 +803,41 @@ function calcExpires(duree) {
   else if (duree === '1an') now.setFullYear(now.getFullYear() + 1);
   return now.toISOString().split('T')[0];
 }
+
+
+// ── DEMANDES TEST ─────────────────────────────────────────────
+// Public — pas besoin d'auth
+app.post('/api/demandes-test', (req, res) => {
+  const { ecole, nom, prenom, telephone, email, ville, nb_eleves, message } = req.body;
+  if (!ecole || !nom || !prenom || !telephone || !email)
+    return res.status(400).json({ error: 'Champs obligatoires manquants' });
+  try {
+    db.prepare(`INSERT INTO demandes_test (ecole,nom,prenom,telephone,email,ville,nb_eleves,message)
+      VALUES (?,?,?,?,?,?,?,?)`).run(ecole, nom, prenom, telephone, email, ville||'', nb_eleves||'', message||'');
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Super admin — liste des demandes
+app.get('/api/superadmin/demandes', auth, isSuperAdmin, (req, res) => {
+  const demandes = db.prepare('SELECT * FROM demandes_test ORDER BY created_at DESC').all();
+  res.json(demandes);
+});
+
+// Super admin — changer statut
+app.put('/api/superadmin/demandes/:id', auth, isSuperAdmin, (req, res) => {
+  const { statut } = req.body;
+  db.prepare('UPDATE demandes_test SET statut=? WHERE id=?').run(statut, req.params.id);
+  res.json({ ok: true });
+});
+
+// Super admin — supprimer demande
+app.delete('/api/superadmin/demandes/:id', auth, isSuperAdmin, (req, res) => {
+  db.prepare('DELETE FROM demandes_test WHERE id=?').run(req.params.id);
+  res.json({ ok: true });
+});
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
