@@ -158,7 +158,10 @@ window.SuperAdminMod = (() => {
           <button class="sa-act-btn sa-act-1an"  onclick="SuperAdminMod.activate(${c.id},'1an')"  title="1 an">📆 1an</button>
           <button class="sa-act-btn sa-act-vie"  onclick="SuperAdminMod.activate(${c.id},'vie')"  title="À vie">♾️ Vie</button>
         </div>
-        <button class="sa-delete-btn" onclick="SuperAdminMod.deleteClient(${c.id})">🗑 Supprimer</button>
+        <div class="sa-bottom-actions">
+          <button class="sa-reset-btn" onclick="SuperAdminMod.resetPassword(${c.id})" title="Réinitialiser le mot de passe">🔑 Réinit. MDP</button>
+          <button class="sa-delete-btn" onclick="SuperAdminMod.deleteClient(${c.id})">🗑 Supprimer</button>
+        </div>
       </div>
     </div>`;
   }
@@ -312,5 +315,72 @@ window.SuperAdminMod = (() => {
     if (m) m.style.display = 'none';
   }
 
-  return { init, activate, activerDemande, refuserDemande, deleteDemande, deleteClient, addClient, saveClient, closeModal, switchTab };
+  async function resetPassword(id) {
+    const client = clients.find(c => c.id === id);
+    const school = client?.school || 'ce client';
+
+    // Show modal for new password
+    document.getElementById('sa-modal-title').textContent = '🔑 Réinitialiser le mot de passe';
+    document.getElementById('sa-modal-body').innerHTML = `
+      <div class="sa-form">
+        <div class="sa-reset-info">
+          <div class="sa-reset-school">🏫 ${school}</div>
+          <div class="sa-reset-email">📧 ${client?.email || ''}</div>
+        </div>
+        <div class="sa-form-group">
+          <label>Nouveau mot de passe *</label>
+          <div style="position:relative">
+            <input type="password" id="sa-new-pw" class="sa-input" placeholder="Minimum 6 caractères" style="padding-right:44px">
+            <button onclick="togglePw('sa-new-pw','sa-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px" id="sa-eye">👁</button>
+          </div>
+        </div>
+        <div class="sa-form-group">
+          <label>Confirmer le mot de passe *</label>
+          <input type="password" id="sa-confirm-pw" class="sa-input" placeholder="Répétez le mot de passe">
+        </div>
+        <div class="sa-pw-suggestions">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px">Suggestions rapides :</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="sa-pw-chip" onclick="fillPw('MadrasaTech2025!')">MadrasaTech2025!</button>
+            <button class="sa-pw-chip" onclick="fillPw('Ecole@2025')">Ecole@2025</button>
+            <button class="sa-pw-chip" onclick="fillPw(genPw())">🎲 Générer</button>
+          </div>
+        </div>
+        <div class="sa-modal-footer">
+          <button class="sa-btn-cancel" onclick="SuperAdminMod.closeModal()">Annuler</button>
+          <button class="sa-btn-create" onclick="SuperAdminMod.saveResetPassword(${id})">🔑 Réinitialiser</button>
+        </div>
+      </div>`;
+    document.getElementById('sa-modal').style.display = 'flex';
+
+    // Helpers inline
+    window.togglePw = (id, eyeId) => {
+      const inp = document.getElementById(id);
+      const eye = document.getElementById(eyeId);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      eye.textContent = inp.type === 'password' ? '👁' : '🙈';
+    };
+    window.fillPw = (pw) => {
+      document.getElementById('sa-new-pw').value = pw;
+      document.getElementById('sa-confirm-pw').value = pw;
+    };
+    window.genPw = () => {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+      return Array.from({length:10}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    };
+  }
+
+  async function saveResetPassword(id) {
+    const pw   = document.getElementById('sa-new-pw').value;
+    const conf = document.getElementById('sa-confirm-pw').value;
+    if (!pw || pw.length < 6) return showToast('Mot de passe trop court (6 min)', 'error');
+    if (pw !== conf) return showToast('Les mots de passe ne correspondent pas', 'error');
+    try {
+      await api.put('/superadmin/clients/'+id+'/password', { password: pw });
+      showToast('✅ Mot de passe réinitialisé avec succès !', 'success');
+      closeModal();
+    } catch(e) { showToast(e.message || 'Erreur', 'error'); }
+  }
+
+  return { init, activate, activerDemande, refuserDemande, deleteDemande, deleteClient, addClient, saveClient, closeModal, switchTab, resetPassword, saveResetPassword };
 })();

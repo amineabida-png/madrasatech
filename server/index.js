@@ -795,6 +795,15 @@ app.delete('/api/superadmin/clients/:id', auth, isSuperAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+app.put('/api/superadmin/clients/:id/password', auth, isSuperAdmin, (req, res) => {
+  const { password } = req.body;
+  if (!password || password.length < 6)
+    return res.status(400).json({ error: 'Mot de passe trop court (6 caractères minimum)' });
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare('UPDATE users SET password = ? WHERE id = ? AND role != ?').run(hash, req.params.id, 'superadmin');
+  res.json({ ok: true });
+});
+
 function calcExpires(duree) {
   if (duree === 'vie') return '9999-12-31';
   const now = new Date();
