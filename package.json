@@ -1,7 +1,7 @@
 {
   "name": "madrasatech",
   "version": "3.0.0",
-  "description": "Système de Gestion Scolaire SaaS — Maroc",
+  "description": "Syst\u00e8me de Gestion Scolaire SaaS \u2014 Maroc",
   "scripts": {
     "start": "node server/index.js"
   },
@@ -12,6 +12,7 @@
     "dotenv": "^16.6.1",
     "express": "^4.22.2",
     "jsonwebtoken": "^9.0.3",
+    "pg": "^8.11.3",
     "sql.js": "^1.10.2"
   },
   "engines": {

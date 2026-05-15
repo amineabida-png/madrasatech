@@ -207,7 +207,7 @@ async function login(){
   try {
     const r    = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const data = await r.json();
-    if(r.ok){ localStorage.setItem('mt_token', data.token); window.location.href='/'; }
+    if(r.ok){ localStorage.setItem('mt_token', data.token); window.location.href='/app'; }
     else{ err.textContent=data.error||'Erreur de connexion'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
   } catch(e){ err.textContent='Erreur réseau. Réessayez.'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
 }

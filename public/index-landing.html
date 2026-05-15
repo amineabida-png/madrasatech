@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MadrasaTech — Système de Gestion Scolaire Maroc</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#1a56db;--primary-dark:#1e429f;--gold:#d97706;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;color:var(--text);overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 5%}
+.nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:var(--primary);text-decoration:none}
+.nav-logo span{font-size:28px}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;transition:.2s}
+.nav-links a:hover{color:var(--primary)}
+.nav-cta{background:var(--primary);color:#fff!important;padding:9px 20px;border-radius:10px}
+.nav-cta:hover{background:var(--primary-dark)!important;opacity:1!important}
+@media(max-width:768px){.nav-links a:not(.nav-cta){display:none}}
+
+/* HERO */
+.hero{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 40%,#1a56db 100%);display:flex;align-items:center;padding:80px 5% 60px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{max-width:1200px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr}}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 16px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:24px}
+.hero-title{font-size:clamp(32px,5vw,56px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:20px}
+.hero-title span{color:#60a5fa}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:36px;max-width:480px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-hero-primary{background:#fff;color:var(--primary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,255,255,.3)}
+.btn-hero-secondary{background:transparent;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;border:2px solid rgba(255,255,255,.4);transition:.2s;display:inline-flex;align-items:center;gap:8px}
+.btn-hero-secondary:hover{background:rgba(255,255,255,.1)}
+.hero-stats{display:flex;gap:32px;margin-top:48px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat-val{font-size:28px;font-weight:900;color:#fff}
+.hero-stat-lbl{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
+.hero-visual{position:relative}
+.hero-mockup{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;backdrop-filter:blur(10px)}
+.mockup-header{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.mockup-dot{width:10px;height:10px;border-radius:50%}
+.mockup-title{color:rgba(255,255,255,.8);font-size:13px;font-weight:600;margin-left:4px}
+.mockup-stat{background:rgba(255,255,255,.06);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mockup-icon{font-size:20px}
+.mockup-val{font-size:18px;font-weight:800;color:#fff}
+.mockup-lbl{font-size:11px;color:rgba(255,255,255,.5)}
+.mockup-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:6px;overflow:hidden}
+.mockup-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#60a5fa,#34d399)}
+
+/* FEATURES */
+.section{padding:80px 5%}
+.section-inner{max-width:1200px;margin:auto}
+.section-label{font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.section-title{font-size:clamp(28px,4vw,42px);font-weight:800;color:var(--text);margin-bottom:16px;line-height:1.2}
+.section-sub{font-size:17px;color:var(--muted);max-width:600px;line-height:1.7;margin-bottom:48px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+.feature-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;transition:box-shadow .2s,transform .2s}
+.feature-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.08);transform:translateY(-3px)}
+.feature-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.feature-title{font-size:17px;font-weight:700;margin-bottom:8px}
+.feature-desc{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* PRICING */
+.pricing-section{background:var(--bg);padding:80px 5%}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto}
+@media(max-width:768px){.pricing-grid{grid-template-columns:1fr}}
+.pricing-card{background:#fff;border:2px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;position:relative;transition:.2s}
+.pricing-card.popular{border-color:var(--primary);box-shadow:0 8px 40px rgba(26,86,219,.15)}
+.pricing-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;font-size:12px;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap}
+.pricing-period{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.pricing-price{font-size:42px;font-weight:900;color:var(--text);margin-bottom:4px;line-height:1}
+.pricing-price sup{font-size:20px;vertical-align:top;margin-top:8px}
+.pricing-price span{font-size:16px;font-weight:500;color:var(--muted)}
+.pricing-save{font-size:12px;color:#059669;font-weight:600;margin-bottom:24px;min-height:18px}
+.pricing-features{text-align:left;margin-bottom:28px}
+.pricing-feature{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#374151;margin-bottom:10px}
+.pricing-feature::before{content:'✅';flex-shrink:0;font-size:13px}
+.pricing-btn{display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:.2s;cursor:pointer;border:none;font-family:inherit}
+.pricing-btn-primary{background:var(--primary);color:#fff}
+.pricing-btn-primary:hover{background:var(--primary-dark)}
+.pricing-btn-outline{background:var(--bg);color:var(--primary);border:2px solid var(--primary)}
+.pricing-btn-outline:hover{background:var(--primary);color:#fff}
+.pricing-btn-gold{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
+.pricing-btn-gold:hover{opacity:.9}
+
+/* MODULES SHOWCASE */
+.modules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.module-chip{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;font-size:13px;font-weight:600;color:#374151}
+.module-chip-icon{font-size:24px;display:block;margin-bottom:6px}
+
+/* CTA */
+.cta-section{background:linear-gradient(135deg,var(--primary),#7c3aed);padding:80px 5%;text-align:center}
+.cta-title{font-size:clamp(28px,4vw,44px);font-weight:900;color:#fff;margin-bottom:16px}
+.cta-sub{font-size:18px;color:rgba(255,255,255,.8);margin-bottom:36px}
+
+/* FOOTER */
+footer{background:#0f172a;padding:40px 5%;text-align:center}
+.footer-logo{font-size:22px;font-weight:800;color:#fff;margin-bottom:8px}
+.footer-sub{font-size:13px;color:rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo"><span>🏫</span> MadrasaTech</a>
+    <div class="nav-links">
+      <a href="#modules">Modules</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="/login.html" class="nav-cta">Se connecter →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">🇲🇦 Conçu pour les écoles marocaines</div>
+      <h1 class="hero-title">Gérez votre école<br><span>intelligemment</span></h1>
+      <p class="hero-sub">MadrasaTech est le système de gestion scolaire tout-en-un qui simplifie la vie des directeurs, professeurs, parents et élèves au Maroc.</p>
+      <div class="hero-btns">
+        <a href="#tarifs" class="btn-hero-primary">🚀 Commencer maintenant</a>
+        <a href="/login.html" class="btn-hero-secondary">Se connecter →</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-val">∞</div><div class="hero-stat-lbl">Élèves gérés</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">18+</div><div class="hero-stat-lbl">Modules intégrés</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">100%</div><div class="hero-stat-lbl">En ligne, partout</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-mockup">
+        <div class="mockup-header">
+          <div class="mockup-dot" style="background:#ef4444"></div>
+          <div class="mockup-dot" style="background:#f59e0b"></div>
+          <div class="mockup-dot" style="background:#10b981"></div>
+          <span class="mockup-title">Tableau de bord — MadrasaTech</span>
+        </div>
+        <div class="mockup-stat">
+          <div class="mockup-icon">👨‍🎓</div>
+          <div><div class="mockup-val">342</div><div class="mockup-lbl">Élèves inscrits</div></div>
+        </div>
+        <div class="mockup-stat">
+          <div class="mockup-icon">✅</div>
+          <div><div class="mockup-val">94%</div><div class="mockup-lbl">Taux de présence</div>
+          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:94%"></div></div></div>
+        </div>
+        <div class="mockup-stat">
+          <div class="mockup-icon">💰</div>
+          <div><div class="mockup-val">48 600 MAD</div><div class="mockup-lbl">Paiements ce mois</div>
+          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:78%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div></div></div>
+        </div>
+        <div class="mockup-stat">
+          <div class="mockup-icon">📊</div>
+          <div><div class="mockup-val">13.8/20</div><div class="mockup-lbl">Moyenne générale</div>
+          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:69%;background:linear-gradient(90deg,#8b5cf6,#6366f1)"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section class="section" id="modules">
+  <div class="section-inner">
+    <div class="section-label">Fonctionnalités</div>
+    <h2 class="section-title">Tout ce dont votre école a besoin</h2>
+    <p class="section-sub">18 modules intégrés pour une gestion complète et sans effort de votre établissement scolaire.</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon" style="background:#eff6ff">📊</div><div class="feature-title">Tableau de bord</div><div class="feature-desc">Vue d'ensemble en temps réel : élèves, paiements, absences et performances.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#f0fdf4">👨‍🎓</div><div class="feature-title">Gestion des élèves</div><div class="feature-desc">Fiches complètes, bulletins, historique des notes et des absences par élève.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fef9c3">📅</div><div class="feature-title">Emploi du temps</div><div class="feature-desc">Planning hebdomadaire par classe, gestion des cours et des salles.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fdf4ff">📊</div><div class="feature-title">Notes & Bulletins</div><div class="feature-desc">Saisie des notes, calcul des moyennes et génération de bulletins PDF.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fff7ed">💰</div><div class="feature-title">Paiements</div><div class="feature-desc">Suivi des scolarités, encaissements et rappels automatiques.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#eff6ff">💬</div><div class="feature-title">Messagerie interne</div><div class="feature-desc">Communication directe entre admin, profs, parents et élèves.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fef2f2">📜</div><div class="feature-title">Certificats officiels</div><div class="feature-desc">Génération automatique de certificats de scolarité, bulletins et attestations.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#f0fdf4">🔔</div><div class="feature-title">Notifications SMS/Email</div><div class="feature-desc">Alertes automatiques aux parents : absences, notes, paiements.</div></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#faf5ff">📚</div><div class="feature-title">Devoirs en ligne</div><div class="feature-desc">Publication et rendu de devoirs directement depuis l'application.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TARIFS -->
+<section class="pricing-section" id="tarifs">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-label" style="text-align:center">Tarifs transparents</div>
+    <h2 class="section-title" style="text-align:center;max-width:600px;margin:0 auto 16px">Un seul prix, toutes les fonctionnalités</h2>
+    <p class="section-sub" style="text-align:center;margin:0 auto 48px">Pas de frais cachés. Pas de limite d'utilisateurs. Toutes les mises à jour incluses.</p>
+    <div class="pricing-grid">
+
+      <!-- 30 JOURS -->
+      <div class="pricing-card">
+        <div class="pricing-period">Mensuel</div>
+        <div class="pricing-price"><sup>MAD</sup>399<span>/mois</span></div>
+        <div class="pricing-save">&nbsp;</div>
+        <div class="pricing-features">
+          <div class="pricing-feature">Élèves illimités</div>
+          <div class="pricing-feature">Tous les modules</div>
+          <div class="pricing-feature">Professeurs illimités</div>
+          <div class="pricing-feature">Parents illimités</div>
+          <div class="pricing-feature">Support email</div>
+          <div class="pricing-feature">Mises à jour incluses</div>
+        </div>
+        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-outline">Démarrer →</a>
+      </div>
+
+      <!-- 1 AN -->
+      <div class="pricing-card popular">
+        <div class="pricing-badge">⭐ Le plus populaire</div>
+        <div class="pricing-period">Annuel</div>
+        <div class="pricing-price"><sup>MAD</sup>3&nbsp;999<span>/an</span></div>
+        <div class="pricing-save">💚 Économisez 789 MAD vs mensuel</div>
+        <div class="pricing-features">
+          <div class="pricing-feature">Élèves illimités</div>
+          <div class="pricing-feature">Tous les modules</div>
+          <div class="pricing-feature">Professeurs illimités</div>
+          <div class="pricing-feature">Parents illimités</div>
+          <div class="pricing-feature">Support prioritaire</div>
+          <div class="pricing-feature">Mises à jour incluses</div>
+          <div class="pricing-feature">Formation offerte</div>
+        </div>
+        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-primary">Commencer →</a>
+      </div>
+
+      <!-- À VIE -->
+      <div class="pricing-card">
+        <div class="pricing-period">À vie</div>
+        <div class="pricing-price"><sup>MAD</sup>12&nbsp;499<span> unique</span></div>
+        <div class="pricing-save">♾️ Payez une fois, utilisez à vie</div>
+        <div class="pricing-features">
+          <div class="pricing-feature">Élèves illimités</div>
+          <div class="pricing-feature">Tous les modules</div>
+          <div class="pricing-feature">Professeurs illimités</div>
+          <div class="pricing-feature">Parents illimités</div>
+          <div class="pricing-feature">Support VIP dédié</div>
+          <div class="pricing-feature">Toutes futures fonctionnalités</div>
+          <div class="pricing-feature">Installation personnalisée</div>
+        </div>
+        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-gold">Acquérir →</a>
+      </div>
+
+    </div>
+
+    <!-- TEST 24H -->
+    <div style="margin-top:40px;background:#fff;border:2px dashed var(--border);border-radius:16px;padding:28px;max-width:500px;margin:40px auto 0">
+      <div style="font-size:2rem;margin-bottom:8px">⏱</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">Testez gratuitement pendant 24h</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Pas de carte bancaire requise. Accès complet à tous les modules.</div>
+      <a href="/login.html" class="pricing-btn pricing-btn-primary" style="max-width:280px;margin:auto;display:block" onclick="ouvrirTest(event)">Demander un accès test</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner">
+    <h2 class="cta-title">Prêt à moderniser votre école ?</h2>
+    <p class="cta-sub">Rejoignez les établissements qui gèrent leur école avec MadrasaTech.</p>
+    <a href="/login.html" class="btn-hero-primary" style="margin:auto;display:inline-flex">Commencer maintenant →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🏫 MadrasaTech</div>
+  <div class="footer-sub">Système de Gestion Scolaire — Maroc · © 2025</div>
+</footer>
+
+<script>
+function ouvrirTest(e) {
+  e.preventDefault();
+  window.location.href = '/login.html';
+}
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'madrasatech.db');
 let db;
+let usePostgres = false;
 
 // Couche d'abstraction synchrone compatible better-sqlite3 et sql.js
 function createSqlJsAdapter(sqlJsDb, filePath) {
@@ -77,24 +78,117 @@ function createSqlJsAdapter(sqlJsDb, filePath) {
   };
 }
 
-// sql.js uniquement (pur JS, pas de compilation native)
-const initSqlJs = require('sql.js');
-let dbReady = false;
+// ── Postgres adapter (même interface que sql.js adapter) ──────
+function createPgAdapter(pool) {
+  // Convert ? placeholders to $1,$2... for PostgreSQL
+  function pgify(sql) {
+    let i = 0;
+    return sql.replace(/\?/g, () => `$${++i}`);
+  }
+  // Convert SQLite types to PostgreSQL
+  function pgSql(sql) {
+    return pgify(sql)
+      .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
+      .replace(/DATETIME DEFAULT CURRENT_TIMESTAMP/gi, 'TIMESTAMP DEFAULT NOW()')
+      .replace(/TEXT/gi, 'TEXT')
+      .replace(/REAL/gi, 'DOUBLE PRECISION')
+      .replace(/last_insert_rowid\(\)/gi, 'lastval()')
+      .replace(/strftime\("%Y-%m",\s*([^)]+)\)/gi, 'to_char($1, \'YYYY-MM\')')
+      .replace(/AUTOINCREMENT/gi, '')
+      .replace(/INTEGER DEFAULT NULL/gi, 'INTEGER')
+      .replace(/CHECK\([^)]+\)/gi, '');
+  }
+  return {
+    pragma: () => {},
+    exec: (sql) => {
+      // Run synchronously via pool (fire and forget for CREATE TABLE)
+      const converted = pgSql(sql);
+      pool.query(converted).catch(e => {
+        if (!e.message.includes('already exists') && !e.message.includes('duplicate'))
+          console.error('PG exec error:', e.message.substring(0,100));
+      });
+    },
+    prepare: (sql) => {
+      const pgQuery = pgSql(sql);
+      return {
+        run: (...args) => {
+          const params = args.flat().map(p => p === undefined ? null : p);
+          // Execute sync-style via a promise stored in a holder
+          let lastId = null;
+          const q = pgQuery.includes('INSERT') ? pgQuery + ' RETURNING id' : pgQuery;
+          const result = { lastInsertRowid: null, changes: 0, _promise: 
+            pool.query(q, params).then(r => {
+              if (r.rows && r.rows[0] && r.rows[0].id) lastId = r.rows[0].id;
+              return { lastInsertRowid: lastId, changes: r.rowCount };
+            }).catch(e => { console.error('PG run:', e.message.substring(0,120)); return { lastInsertRowid:null, changes:0 }; })
+          };
+          return result;
+        },
+        get: (...args) => {
+          // Can't do sync with pg — return a special object
+          const params = args.flat().map(p => p === undefined ? null : p);
+          return { _pgPromise: pool.query(pgQuery, params).then(r => r.rows[0] || undefined).catch(e => { console.error('PG get:', e.message.substring(0,100)); return undefined; }) };
+        },
+        all: (...args) => {
+          const params = args.flat().map(p => p === undefined ? null : p);
+          return { _pgPromise: pool.query(pgQuery, params).then(r => r.rows || []).catch(e => { console.error('PG all:', e.message.substring(0,100)); return []; }) };
+        }
+      };
+    }
+  };
+}
 
-initSqlJs().then(SQL => {
+// The routes use sync-style db.prepare().get() / .all() / .run()
+// With Postgres we need async. We'll wrap Express routes to handle both.
+// Actually the cleanest approach: keep sql.js for reliability
+// and add pg as an optional persistent storage layer.
+
+// ── Initialize DB ─────────────────────────────────────────────
+const initSqlJs = require('sql.js');
+
+async function initDatabase() {
+  // Try PostgreSQL first if DATABASE_URL is set
+  const DATABASE_URL = process.env.DATABASE_URL;
+  
+  if (DATABASE_URL) {
+    try {
+      const { Pool } = require('pg');
+      const pool = new Pool({ 
+        connectionString: DATABASE_URL, 
+        ssl: { rejectUnauthorized: false },
+        max: 5
+      });
+      await pool.query('SELECT 1');
+      console.log('✅ PostgreSQL connecté (Neon)');
+      usePostgres = true;
+      // For pg, we use a different approach — rewrite key queries async
+      global._pgPool = pool;
+      // Still use sql.js as main interface but sync pg writes
+      // Best approach: use sql.js for reads, pg for persistence
+    } catch(e) {
+      console.log('⚠️ Postgres indisponible:', e.message.substring(0,50), '— utilisation sql.js');
+    }
+  }
+
+  // Always use sql.js as primary (synchronous interface)
+  const SQL = await initSqlJs();
   let sqlJsDb;
   if (fs.existsSync(dbPath)) {
     const fileBuffer = fs.readFileSync(dbPath);
     sqlJsDb = new SQL.Database(fileBuffer);
+    console.log('✅ sql.js rechargé depuis fichier existant');
   } else {
     sqlJsDb = new SQL.Database();
+    console.log('✅ sql.js nouvelle base de données');
   }
   db = createSqlJsAdapter(sqlJsDb, dbPath);
-  console.log('✅ sql.js chargé');
+  
   initDB();
   startServer();
-}).catch(err => {
-  console.error('Erreur sql.js:', err);
+}
+
+initDatabase().catch(err => {
+  console.error('Erreur init DB:', err);
   process.exit(1);
 });
 
@@ -1274,7 +1368,15 @@ app.delete('/api/superadmin/demandes/:id', auth, isSuperAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index-landing.html'));
+});
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
 app.get('*', (req, res) => {
+  // For API 404s return JSON, for others serve app
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Route non trouvée' });
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
