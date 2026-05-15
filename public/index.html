@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MadrasaTech</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="app-shell">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-icon">🏫</div>
+        <div class="sb-brand">
+          <span class="sb-name">MadrasaTech</span>
+          <span class="sb-school" id="schoolName">Chargement...</span>
+        </div>
+      </div>
+      <button class="sb-close" onclick="toggleSidebar()">✕</button>
+    </div>
+    <div class="sb-menu">
+      <div class="sb-section">Tableau de bord</div>
+      <a class="sb-link active" href="#" data-view="dashboard" onclick="nav(this)">
+        <span class="sb-ico">📊</span><span>Dashboard</span>
+      </a>
+      <div class="sb-section">Académique</div>
+      <a class="sb-link" href="#" data-view="eleves" onclick="nav(this)">
+        <span class="sb-ico">👨‍🎓</span><span>Élèves</span><span class="sb-badge" id="badge-eleves">0</span>
+      </a>
+      <a class="sb-link" href="#" data-view="classes" onclick="nav(this)">
+        <span class="sb-ico">🏫</span><span>Classes</span>
+      </a>
+      <a class="sb-link" href="#" data-view="professeurs" onclick="nav(this)">
+        <span class="sb-ico">👨‍🏫</span><span>Professeurs</span>
+      </a>
+      <a class="sb-link" href="#" data-view="notes" onclick="nav(this)">
+        <span class="sb-ico">📝</span><span>Notes & Bulletins</span>
+      </a>
+      <a class="sb-link" href="#" data-view="absences" onclick="nav(this)">
+        <span class="sb-ico">📅</span><span>Absences</span>
+      </a>
+      <a class="sb-link" href="#" data-view="emploi" onclick="nav(this)">
+        <span class="sb-ico">🗓</span><span>Emploi du temps</span>
+      </a>
+      <div class="sb-section">Finance</div>
+      <a class="sb-link" href="#" data-view="paiements" onclick="nav(this)">
+        <span class="sb-ico">💰</span><span>Paiements</span>
+      </a>
+      <a class="sb-link" href="#" data-view="depenses" onclick="nav(this)">
+        <span class="sb-ico">📤</span><span>Dépenses</span>
+      </a>
+      <div class="sb-section">Communication</div>
+      <a class="sb-link" href="#" data-view="annonces" onclick="nav(this)">
+        <span class="sb-ico">📢</span><span>Annonces</span>
+      </a>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="sbUser">
+        <div class="sb-avatar" id="sbAvatar">A</div>
+        <div class="sb-userinfo">
+          <span class="sb-username" id="sbUsername">Admin</span>
+          <span class="sb-plan" id="sbPlan">Pro</span>
+        </div>
+      </div>
+      <div class="sb-actions">
+        <button class="sb-action-btn" onclick="showSettings()" title="Paramètres">⚙️</button>
+        <button class="sb-action-btn" onclick="logout()" title="Déconnexion">🚪</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- OVERLAY -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrap">
+          <input type="text" id="globalSearch" placeholder="Rechercher un élève..." oninput="globalSearch()">
+          <span class="search-ico">🔍</span>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+        <span class="top-school" id="topSchool">MadrasaTech</span>
+      </div>
+    </header>
+
+    <!-- VIEWS -->
+    <div class="content" id="content">
+      <div id="view-dashboard" class="view active"></div>
+      <div id="view-eleves" class="view"></div>
+      <div id="view-classes" class="view"></div>
+      <div id="view-professeurs" class="view"></div>
+      <div id="view-notes" class="view"></div>
+      <div id="view-absences" class="view"></div>
+      <div id="view-emploi" class="view"></div>
+      <div id="view-paiements" class="view"></div>
+      <div id="view-depenses" class="view"></div>
+      <div id="view-annonces" class="view"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL GÉNÉRIQUE -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-header">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toasts"></div>
+
+<!-- PRINT ZONE -->
+<div id="print-zone"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/modules/dashboard.js"></script>
+<script src="/js/modules/eleves.js"></script>
+<script src="/js/modules/classes.js"></script>
+<script src="/js/modules/professeurs.js"></script>
+<script src="/js/modules/notes.js"></script>
+<script src="/js/modules/absences.js"></script>
+<script src="/js/modules/emploi.js"></script>
+<script src="/js/modules/paiements.js"></script>
+<script src="/js/modules/depenses.js"></script>
+<script src="/js/modules/annonces.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

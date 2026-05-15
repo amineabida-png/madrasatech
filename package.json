@@ -1,0 +1,21 @@
+{
+  "name": "madrasatech",
+  "version": "3.0.0",
+  "description": "Système de Gestion Scolaire SaaS — Maroc",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.6.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.3",
+    "sql.js": "^1.10.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
