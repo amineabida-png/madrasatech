@@ -122,12 +122,40 @@ function initDB() {
       prenom TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent')),
+      role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent','eleve')),
       telephone TEXT,
       actif INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_login DATETIME,
       FOREIGN KEY(owner_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS devoirs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      titre TEXT NOT NULL,
+      description TEXT,
+      matiere TEXT NOT NULL,
+      classe TEXT,
+      date_limite TEXT,
+      type TEXT DEFAULT 'devoir',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(owner_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS rendus_devoirs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      devoir_id INTEGER NOT NULL,
+      eleve_user_id INTEGER NOT NULL,
+      contenu TEXT,
+      fichier_nom TEXT,
+      fichier_data TEXT,
+      statut TEXT DEFAULT 'rendu',
+      note REAL,
+      commentaire_prof TEXT,
+      rendu_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(devoir_id) REFERENCES devoirs(id),
+      FOREIGN KEY(eleve_user_id) REFERENCES school_users(id)
     );
 
     CREATE TABLE IF NOT EXISTS eleves (
@@ -293,6 +321,36 @@ function initDB() {
 
   // Migrations
   try { db.exec("ALTER TABLE users ADD COLUMN plan_expires TEXT DEFAULT NULL"); } catch(e) {}
+  // Migration school_users: ajouter rôle eleve + colonne eleve_id
+  try { db.exec("ALTER TABLE school_users ADD COLUMN eleve_id INTEGER DEFAULT NULL"); } catch(e) {}
+  try {
+    // Recréer avec nouveau CHECK si besoin
+    const cols = db.prepare("PRAGMA table_info(school_users)").all();
+    const hasCheck = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='school_users'").get();
+    if (hasCheck && hasCheck.sql && !hasCheck.sql.includes("'eleve'")) {
+      // Backup data
+      const rows = db.prepare("SELECT * FROM school_users").all();
+      db.exec("DROP TABLE school_users");
+      db.exec(`CREATE TABLE school_users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner_id INTEGER NOT NULL,
+        nom TEXT NOT NULL, prenom TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent','eleve')),
+        telephone TEXT, actif INTEGER DEFAULT 1, eleve_id INTEGER DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME
+      )`);
+      // Restore data
+      rows.forEach(r => {
+        try {
+          db.prepare("INSERT INTO school_users (id,owner_id,nom,prenom,email,password,role,telephone,actif,eleve_id,created_at,last_login) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+            .run(r.id,r.owner_id,r.nom,r.prenom,r.email,r.password,r.role,r.telephone||'',r.actif||1,r.eleve_id||null,r.created_at,r.last_login||null);
+        } catch(e) {}
+      });
+    }
+  } catch(e) { console.log('Migration school_users:', e.message); }
+  try { db.exec(`CREATE TABLE IF NOT EXISTS devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, matiere TEXT NOT NULL, classe TEXT, date_limite TEXT, type TEXT DEFAULT 'devoir', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS rendus_devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, devoir_id INTEGER NOT NULL, eleve_user_id INTEGER NOT NULL, contenu TEXT, fichier_nom TEXT, fichier_data TEXT, statut TEXT DEFAULT 'rendu', note REAL, commentaire_prof TEXT, rendu_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
   try { db.exec("CREATE TABLE IF NOT EXISTS school_users (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, nom TEXT NOT NULL, prenom TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, telephone TEXT, actif INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME)"); } catch(e) {}
 
   // Seed admin par défaut
@@ -858,12 +916,12 @@ app.post('/api/school-users', auth, (req, res) => {
   const { nom, prenom, email, password, role, telephone } = req.body;
   if (!nom || !prenom || !email || !password || !role)
     return res.status(400).json({ error: 'Champs obligatoires manquants' });
-  if (!['admin_ecole','professeur','parent'].includes(role))
+  if (!['admin_ecole','professeur','parent','eleve'].includes(role))
     return res.status(400).json({ error: 'Rôle invalide' });
   if (password.length < 6)
     return res.status(400).json({ error: 'Mot de passe trop court (6 min)' });
 
-  // Vérifier limite admins
+  // Vérifier limite admins (eleve/prof/parent = illimités)
   if (role === 'admin_ecole') {
     const count = db.prepare('SELECT COUNT(*) as n FROM school_users WHERE owner_id=? AND role=? AND actif=1').get(req.user.id, 'admin_ecole');
     if (count.n >= 10)
@@ -875,10 +933,11 @@ app.post('/api/school-users', auth, (req, res) => {
   if (existing) return res.status(400).json({ error: 'Cet email est déjà utilisé' });
 
   const hash = bcrypt.hashSync(password, 10);
+  const { eleve_id } = req.body;
   const r = db.prepare(`
-    INSERT INTO school_users (owner_id, nom, prenom, email, password, role, telephone)
-    VALUES (?,?,?,?,?,?,?)
-  `).run(req.user.id, nom, prenom, email, hash, role, telephone||'');
+    INSERT INTO school_users (owner_id, nom, prenom, email, password, role, telephone, eleve_id)
+    VALUES (?,?,?,?,?,?,?,?)
+  `).run(req.user.id, nom, prenom, email, hash, role, telephone||'', eleve_id||null);
   res.json({ ok: true, id: r.lastInsertRowid });
 });
 
@@ -911,6 +970,112 @@ app.delete('/api/school-users/:id', auth, (req, res) => {
   if (!su) return res.status(404).json({ error: 'Non trouvé' });
   db.prepare('DELETE FROM school_users WHERE id=? AND owner_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
+});
+
+
+// ── DEVOIRS (admin/prof crée) ─────────────────────────────────
+app.get('/api/devoirs', auth, (req, res) => {
+  const { classe } = req.query;
+  let q = 'SELECT * FROM devoirs WHERE owner_id=?';
+  const params = [req.user.id];
+  if (classe) { q+=' AND classe=?'; params.push(classe); }
+  q += ' ORDER BY date_limite ASC';
+  res.json(db.prepare(q).all(...params));
+});
+
+app.post('/api/devoirs', auth, (req, res) => {
+  const { titre, description, matiere, classe, date_limite, type } = req.body;
+  if (!titre||!matiere) return res.status(400).json({ error: 'Titre et matière requis' });
+  const r = db.prepare(`INSERT INTO devoirs (owner_id,titre,description,matiere,classe,date_limite,type)
+    VALUES (?,?,?,?,?,?,?)`).run(req.user.id,titre,description||'',matiere,classe||'',date_limite||'',type||'devoir');
+  res.json({ ok:true, id:r.lastInsertRowid });
+});
+
+app.put('/api/devoirs/:id', auth, (req, res) => {
+  const { titre, description, matiere, classe, date_limite, type } = req.body;
+  db.prepare(`UPDATE devoirs SET titre=?,description=?,matiere=?,classe=?,date_limite=?,type=? WHERE id=? AND owner_id=?`)
+    .run(titre,description,matiere,classe,date_limite,type,req.params.id,req.user.id);
+  res.json({ ok:true });
+});
+
+app.delete('/api/devoirs/:id', auth, (req, res) => {
+  db.prepare('DELETE FROM devoirs WHERE id=? AND owner_id=?').run(req.params.id,req.user.id);
+  res.json({ ok:true });
+});
+
+// ── RENDUS (élève soumet) ─────────────────────────────────────
+// Admin/prof voit tous les rendus d'un devoir
+app.get('/api/devoirs/:id/rendus', auth, (req, res) => {
+  const rendus = db.prepare(`
+    SELECT r.*, su.nom, su.prenom, su.email
+    FROM rendus_devoirs r
+    JOIN school_users su ON su.id = r.eleve_user_id
+    WHERE r.devoir_id=?
+    ORDER BY r.rendu_at DESC
+  `).all(req.params.id);
+  res.json(rendus);
+});
+
+// Élève soumet son rendu
+app.post('/api/devoirs/:id/rendus', auth, (req, res) => {
+  const { contenu, fichier_nom, fichier_data } = req.body;
+  // eleve_user_id = id dans school_users (le compte élève)
+  const { eleve_user_id } = req.body;
+  if (!eleve_user_id) return res.status(400).json({ error: 'eleve_user_id requis' });
+  // Vérifier pas déjà rendu
+  const existing = db.prepare('SELECT id FROM rendus_devoirs WHERE devoir_id=? AND eleve_user_id=?').get(req.params.id, eleve_user_id);
+  if (existing) {
+    db.prepare('UPDATE rendus_devoirs SET contenu=?,fichier_nom=?,fichier_data=?,rendu_at=CURRENT_TIMESTAMP WHERE id=?')
+      .run(contenu||'',fichier_nom||'',fichier_data||'',existing.id);
+    return res.json({ ok:true, updated:true });
+  }
+  db.prepare('INSERT INTO rendus_devoirs (devoir_id,eleve_user_id,contenu,fichier_nom,fichier_data) VALUES (?,?,?,?,?)')
+    .run(req.params.id,eleve_user_id,contenu||'',fichier_nom||'',fichier_data||'');
+  res.json({ ok:true });
+});
+
+// Prof corrige / note un rendu
+app.put('/api/rendus/:id', auth, (req, res) => {
+  const { note, commentaire_prof, statut } = req.body;
+  db.prepare('UPDATE rendus_devoirs SET note=?,commentaire_prof=?,statut=? WHERE id=?')
+    .run(note,commentaire_prof||'',statut||'corrige',req.params.id);
+  res.json({ ok:true });
+});
+
+// ── ESPACE ÉLÈVE — ses données ────────────────────────────────
+// Élève voit ses notes (par eleve_id lié)
+app.get('/api/eleve-space/notes', auth, (req, res) => {
+  const su = db.prepare('SELECT eleve_id FROM school_users WHERE id=? AND role=?').get(req.user.id||req.body?.su_id, 'eleve');
+  // Pour l'instant on filtre par email dans eleves
+  const eleve = db.prepare('SELECT * FROM eleves WHERE email=?').get(req.user.email||'');
+  if (!eleve) return res.json([]);
+  const notes = db.prepare(`SELECT n.*,e.nom,e.prenom FROM notes n JOIN eleves e ON e.id=n.eleve_id WHERE n.eleve_id=? AND n.user_id=? ORDER BY n.trimestre,n.matiere`).all(eleve.id, eleve.user_id||0);
+  res.json(notes);
+});
+
+app.get('/api/eleve-space/emploi', auth, (req, res) => {
+  const eleve = db.prepare('SELECT * FROM eleves WHERE email=?').get(req.user.email||'');
+  if (!eleve||!eleve.classe) return res.json([]);
+  res.json(db.prepare('SELECT * FROM emploi_temps WHERE user_id=? AND classe=? ORDER BY jour,heure_debut').all(eleve.user_id||0, eleve.classe));
+});
+
+app.get('/api/eleve-space/devoirs', auth, (req, res) => {
+  const eleve = db.prepare('SELECT * FROM eleves WHERE email=?').get(req.user.email||'');
+  if (!eleve) return res.json([]);
+  const devoirs = db.prepare("SELECT * FROM devoirs WHERE (classe=? OR classe='' OR classe IS NULL) ORDER BY date_limite ASC").all(eleve.classe||"");
+  // Enrichir avec statut rendu
+  const suId = db.prepare('SELECT id FROM school_users WHERE email=?').get(req.user.email||'');
+  const enriched = devoirs.map(d => {
+    const rendu = suId ? db.prepare('SELECT * FROM rendus_devoirs WHERE devoir_id=? AND eleve_user_id=?').get(d.id, suId.id) : null;
+    return { ...d, rendu };
+  });
+  res.json(enriched);
+});
+
+app.get('/api/eleve-space/absences', auth, (req, res) => {
+  const eleve = db.prepare('SELECT * FROM eleves WHERE email=?').get(req.user.email||'');
+  if (!eleve) return res.json([]);
+  res.json(db.prepare('SELECT * FROM absences WHERE eleve_id=? ORDER BY date_absence DESC').all(eleve.id));
 });
 
 // ── DEMANDES TEST ─────────────────────────────────────────────

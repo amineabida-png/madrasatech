@@ -79,7 +79,7 @@ function goView(view) {
   const target = document.getElementById('view-'+view);
   if (target) target.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l => l.classList.toggle('active', l.dataset.view===view));
-  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces',utilisateurs:'Utilisateurs',parametres:'Paramètres',superadmin:'Super Admin'};
+  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces',utilisateurs:'Utilisateurs',devoirs:'Devoirs & Exercices','espace-eleve':'Mon Espace',parametres:'Paramètres',superadmin:'Super Admin'};
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.textContent = names[view]||view;
 
@@ -94,7 +94,9 @@ function goView(view) {
     paiements:   () => typeof loadPaiements   === 'function' && loadPaiements(),
     depenses:    () => typeof loadDepenses    === 'function' && loadDepenses(),
     annonces:    () => typeof AnnoncesMod !== 'undefined' ? AnnoncesMod.init() : typeof loadAnnonces === 'function' && loadAnnonces(),
-    utilisateurs:() => typeof loadUtilisateurs === 'function' && loadUtilisateurs(),
+    utilisateurs:  () => typeof loadUtilisateurs  === 'function' && loadUtilisateurs(),
+    devoirs:       () => typeof loadDevoirs       === 'function' && loadDevoirs(),
+    'espace-eleve':() => typeof loadEspaceEleve   === 'function' && loadEspaceEleve(),
     superadmin:  () => typeof SuperAdminMod   !== 'undefined' && SuperAdminMod.init(),
   };
   if(loaders[view]) loaders[view]();

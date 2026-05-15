@@ -21,8 +21,9 @@ function renderUtilisateurs(data) {
 
   const roles = [
     { key:'admin_ecole', label:'Administrateurs', icon:'🛡️', color:'#6366f1', limit:10,    desc:'Accès complet à la gestion de l\'école' },
-    { key:'professeur',  label:'Professeurs',     icon:'👨‍🏫', color:'#0ea5e9', limit:null,  desc:'Accès aux notes, absences et emploi du temps' },
+    { key:'professeur',  label:'Professeurs',     icon:'👨‍🏫', color:'#0ea5e9', limit:null,  desc:'Notes, absences, emploi du temps, devoirs' },
     { key:'parent',      label:'Parents d\'élèves',icon:'👨‍👩‍👧', color:'#10b981', limit:null,  desc:'Consultation des bulletins et absences de leurs enfants' },
+    { key:'eleve',       label:'Élèves',           icon:'🎓', color:'#f59e0b', limit:null,  desc:'Notes, emploi du temps, devoirs à rendre — ∞ illimité' },
   ];
 
   const activeFilter = window._usersFilter || 'tous';
@@ -66,8 +67,8 @@ function renderUtilisateurs(data) {
   <!-- Filtres + recherche -->
   <div class="usr-toolbar">
     <div class="usr-filters">
-      ${['tous','admin_ecole','professeur','parent'].map(f => {
-        const labels = {tous:'Tous',admin_ecole:'🛡️ Admins',professeur:'👨‍🏫 Profs',parent:'👨‍👩‍👧 Parents'};
+      ${['tous','admin_ecole','professeur','parent','eleve'].map(f => {
+        const labels = {tous:'Tous',admin_ecole:'🛡️ Admins',professeur:'👨‍🏫 Profs',parent:'👨‍👩‍👧 Parents',eleve:'🎓 Élèves'};
         return `<button class="usr-filter-btn ${activeFilter===f?'active':''}" onclick="filterUsers('${f}')">${labels[f]}</button>`;
       }).join('')}
     </div>
@@ -115,6 +116,7 @@ function renderUserRows(users, filter='tous') {
     admin_ecole: { label:'Admin',     badge:'badge-purple', icon:'🛡️' },
     professeur:  { label:'Professeur',badge:'badge-blue',   icon:'👨‍🏫' },
     parent:      { label:'Parent',    badge:'badge-green',  icon:'👨‍👩‍👧' },
+    eleve:       { label:'Élève',     badge:'badge-amber',  icon:'🎓' },
   };
   const filtered = users.filter(u => filter==='tous' || u.role===filter);
   if (!filtered.length) return `<tr><td colspan="7"><div class="empty"><div class="empty-ico">👥</div><div class="empty-title">Aucun utilisateur${filter!=='tous'?' dans cette catégorie':''}</div></div></td></tr>`;
@@ -211,6 +213,15 @@ function modalUser() {
             <div class="usr-role-icon" style="background:#f0fdf4">👨‍👩‍👧</div>
             <div class="usr-role-name">Parent</div>
             <div class="usr-role-desc">Bulletins & absences</div>
+            <div class="usr-role-limit">∞ Illimité</div>
+          </div>
+        </label>
+        <label class="usr-role-opt">
+          <input type="radio" name="u-role" value="eleve">
+          <div class="usr-role-card" style="border-color:#f59e0b">
+            <div class="usr-role-icon" style="background:#fffbeb">🎓</div>
+            <div class="usr-role-name">Élève</div>
+            <div class="usr-role-desc">Notes, cours, devoirs</div>
             <div class="usr-role-limit">∞ Illimité</div>
           </div>
         </label>
