@@ -163,5 +163,5 @@ async function saveSettings() {
 async function logout() {
   if (!confirm('Déconnexion ?')) return;
   await API.logout();
-  window.location.href = '/login';
+  localStorage.removeItem('mt_token'); window.location.href = '/login.html';
 }

@@ -420,8 +420,8 @@ app.post('/api/auth/login', (req, res) => {
   db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
 
   const token = jwt.sign({ id: user.id, email: user.email, role: user.role, school: user.school, plan: user.plan, is_demo: user.is_demo }, JWT_SECRET, { expiresIn: '7d' });
-  res.cookie('token', token, { httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
-  res.json({ ok: true, user: { id: user.id, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, school: user.school, plan: user.plan, is_demo: user.is_demo } });
+  res.cookie('token', token, { httpOnly: false, maxAge: 7*24*60*60*1000, sameSite: 'lax' });
+  res.json({ ok: true, token, user: { id: user.id, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, school: user.school, plan: user.plan, is_demo: user.is_demo } });
 });
 
 app.post('/api/auth/logout', (req, res) => {
