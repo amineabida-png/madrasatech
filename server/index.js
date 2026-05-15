@@ -156,7 +156,7 @@ db = createPgDB(pgPool);
 
 // Test connection then init
 pgPool.query('SELECT 1').then(() => {
-  console.log('✅ PostgreSQL Neon connecté');
+  console.log('✅ PostgreSQL Railway connecté');
   initDB().then(() => startServer()).catch(e => {
     console.error('initDB error:', e.message);
     process.exit(1);
