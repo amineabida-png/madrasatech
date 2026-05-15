@@ -42,13 +42,18 @@ let db;
 // ── PostgreSQL via Neon ──────────────────────────────────────
 const { Pool } = require('pg');
 
+// DATABASE_URL est injectée automatiquement par Railway depuis le service Postgres
+const DB_URL = process.env.DATABASE_URL;
+if (!DB_URL) {
+  console.error('❌ DATABASE_URL manquante — ajoutez-la dans Railway Variables');
+  process.exit(1);
+}
+
 const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL ||
-    'postgresql://postgres:PfPPftjcyCTISjRjBNQaeyMMPinKaQpo@postgres.railway.internal:5432/railway',
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode') 
-    ? { rejectUnauthorized: false } 
-    : false,
+  connectionString: DB_URL,
+  ssl: DB_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
   max: 10,
+  connectionTimeoutMillis: 10000,
 });
 
 pgPool.on('error', (err) => console.error('PG pool error:', err.message));
