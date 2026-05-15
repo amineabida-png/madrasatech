@@ -425,3 +425,48 @@ select.filter-input { background: #fff; cursor: pointer; }
 .sa-pw-suggestions { background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:12px; margin-bottom:4px; }
 .sa-pw-chip { background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; color:#374151; transition:.15s; font-family:monospace; }
 .sa-pw-chip:hover { border-color:#6366f1; color:#6366f1; background:#f5f3ff; }
+
+/* ══════════════════════════════════════
+   MODULE UTILISATEURS
+   ══════════════════════════════════════ */
+.usr-kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-bottom:1.5rem; }
+@media(max-width:768px){ .usr-kpi-grid { grid-template-columns:1fr; } }
+
+.usr-kpi-card { background:#fff; border-radius:16px; padding:1.25rem; border:1px solid #e2e8f0; border-top-width:3px; }
+.usr-kpi-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.usr-kpi-icon { font-size:1.6rem; }
+.usr-kpi-count { font-size:2rem; font-weight:800; line-height:1; }
+.usr-kpi-label { font-size:0.95rem; font-weight:700; color:#0f172a; margin-bottom:4px; }
+.usr-kpi-desc { font-size:0.78rem; color:#94a3b8; margin-bottom:10px; line-height:1.4; }
+.usr-kpi-bar-wrap { display:flex; align-items:center; gap:8px; }
+.usr-kpi-bar { flex:1; height:6px; border-radius:99px; overflow:hidden; }
+.usr-kpi-quota { font-size:12px; font-weight:700; color:#64748b; white-space:nowrap; }
+.usr-kpi-warn { color:#ef4444 !important; }
+.usr-kpi-unlimited { font-size:12px; color:#10b981; font-weight:700; margin-top:4px; }
+.usr-limit-badge { display:inline-block; background:#fef2f2; color:#ef4444; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; margin-top:8px; }
+
+/* Toolbar */
+.usr-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:1rem; flex-wrap:wrap; }
+.usr-filters { display:flex; gap:6px; flex-wrap:wrap; }
+.usr-filter-btn { padding:7px 16px; border:1.5px solid #e2e8f0; background:#fff; border-radius:99px; font-size:13px; font-weight:600; cursor:pointer; color:#64748b; transition:.15s; font-family:inherit; }
+.usr-filter-btn:hover { border-color:#6366f1; color:#6366f1; }
+.usr-filter-btn.active { background:#6366f1; border-color:#6366f1; color:#fff; }
+.usr-search { padding:8px 16px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; width:220px; font-family:inherit; }
+.usr-search:focus { border-color:#6366f1; }
+
+/* Role selector */
+.usr-role-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
+.usr-role-opt { cursor:pointer; }
+.usr-role-opt input { display:none; }
+.usr-role-card { border:2px solid #e2e8f0; border-radius:14px; padding:14px 10px; text-align:center; transition:.15s; cursor:pointer; }
+.usr-role-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.usr-role-selected { background:#fafafe; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
+.usr-role-icon { font-size:1.8rem; margin-bottom:6px; }
+.usr-role-name { font-size:13px; font-weight:700; color:#0f172a; margin-bottom:3px; }
+.usr-role-desc { font-size:11px; color:#94a3b8; margin-bottom:6px; }
+.usr-role-limit { font-size:11px; font-weight:600; color:#6366f1; }
+.usr-limit-warn { color:#ef4444 !important; }
+.usr-role-disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
+
+/* Avatar gray */
+.av-gray { background:#e2e8f0; color:#94a3b8; }

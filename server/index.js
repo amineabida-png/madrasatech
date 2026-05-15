@@ -115,6 +115,21 @@ function initDB() {
       is_demo INTEGER DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS school_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      nom TEXT NOT NULL,
+      prenom TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent')),
+      telephone TEXT,
+      actif INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_login DATETIME,
+      FOREIGN KEY(owner_id) REFERENCES users(id)
+    );
+
     CREATE TABLE IF NOT EXISTS eleves (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -276,8 +291,9 @@ function initDB() {
     );
   `);
 
-  // Migration: ajouter plan_expires si absent
+  // Migrations
   try { db.exec("ALTER TABLE users ADD COLUMN plan_expires TEXT DEFAULT NULL"); } catch(e) {}
+  try { db.exec("CREATE TABLE IF NOT EXISTS school_users (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, nom TEXT NOT NULL, prenom TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, telephone TEXT, actif INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME)"); } catch(e) {}
 
   // Seed admin par défaut
   const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get('admin@madrasatech.ma');
@@ -813,6 +829,89 @@ function calcExpires(duree) {
   return now.toISOString().split('T')[0];
 }
 
+
+
+// ── LIMITES PAR RÔLE ──────────────────────────────────────────
+const ROLE_LIMITS = {
+  admin_ecole: 10,    // max 10 admins par école
+  professeur: Infinity, // illimité
+  parent: Infinity,     // illimité
+};
+
+// ── SCHOOL USERS ROUTES ───────────────────────────────────────
+// GET — liste des utilisateurs de l'école
+app.get('/api/school-users', auth, (req, res) => {
+  const users = db.prepare(`
+    SELECT id, nom, prenom, email, role, telephone, actif, created_at, last_login
+    FROM school_users WHERE owner_id = ? ORDER BY role, nom
+  `).all(req.user.id);
+  
+  // Compter par rôle
+  const counts = { admin_ecole: 0, professeur: 0, parent: 0 };
+  users.forEach(u => { if(counts[u.role] !== undefined) counts[u.role]++; });
+  
+  res.json({ users, counts, limits: { admin_ecole: 10, professeur: null, parent: null } });
+});
+
+// POST — créer un utilisateur
+app.post('/api/school-users', auth, (req, res) => {
+  const { nom, prenom, email, password, role, telephone } = req.body;
+  if (!nom || !prenom || !email || !password || !role)
+    return res.status(400).json({ error: 'Champs obligatoires manquants' });
+  if (!['admin_ecole','professeur','parent'].includes(role))
+    return res.status(400).json({ error: 'Rôle invalide' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Mot de passe trop court (6 min)' });
+
+  // Vérifier limite admins
+  if (role === 'admin_ecole') {
+    const count = db.prepare('SELECT COUNT(*) as n FROM school_users WHERE owner_id=? AND role=? AND actif=1').get(req.user.id, 'admin_ecole');
+    if (count.n >= 10)
+      return res.status(400).json({ error: 'Limite atteinte : 10 administrateurs maximum par école' });
+  }
+
+  // Vérifier email unique
+  const existing = db.prepare('SELECT id FROM school_users WHERE email=?').get(email);
+  if (existing) return res.status(400).json({ error: 'Cet email est déjà utilisé' });
+
+  const hash = bcrypt.hashSync(password, 10);
+  const r = db.prepare(`
+    INSERT INTO school_users (owner_id, nom, prenom, email, password, role, telephone)
+    VALUES (?,?,?,?,?,?,?)
+  `).run(req.user.id, nom, prenom, email, hash, role, telephone||'');
+  res.json({ ok: true, id: r.lastInsertRowid });
+});
+
+// PUT — modifier un utilisateur
+app.put('/api/school-users/:id', auth, (req, res) => {
+  const { nom, prenom, email, telephone, actif } = req.body;
+  const su = db.prepare('SELECT * FROM school_users WHERE id=? AND owner_id=?').get(req.params.id, req.user.id);
+  if (!su) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  db.prepare(`
+    UPDATE school_users SET nom=?, prenom=?, email=?, telephone=?, actif=? WHERE id=? AND owner_id=?
+  `).run(nom||su.nom, prenom||su.prenom, email||su.email, telephone||su.telephone, actif!==undefined?actif:su.actif, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// PUT — reset mot de passe
+app.put('/api/school-users/:id/password', auth, (req, res) => {
+  const { password } = req.body;
+  if (!password || password.length < 6)
+    return res.status(400).json({ error: 'Mot de passe trop court' });
+  const su = db.prepare('SELECT id FROM school_users WHERE id=? AND owner_id=?').get(req.params.id, req.user.id);
+  if (!su) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare('UPDATE school_users SET password=? WHERE id=? AND owner_id=?').run(hash, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// DELETE — supprimer un utilisateur
+app.delete('/api/school-users/:id', auth, (req, res) => {
+  const su = db.prepare('SELECT id FROM school_users WHERE id=? AND owner_id=?').get(req.params.id, req.user.id);
+  if (!su) return res.status(404).json({ error: 'Non trouvé' });
+  db.prepare('DELETE FROM school_users WHERE id=? AND owner_id=?').run(req.params.id, req.user.id);
+  res.json({ ok: true });
+});
 
 // ── DEMANDES TEST ─────────────────────────────────────────────
 // Public — pas besoin d'auth
