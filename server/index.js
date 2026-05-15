@@ -34,10 +34,12 @@ function createSqlJsAdapter(sqlJsDb, filePath) {
       saveDB();
     },
     prepare: (sql) => {
+      // Convert undefined to null for sql.js compatibility
+      const sanitize = (params) => params.map(p => p === undefined ? null : p);
       return {
         run: (...args) => {
           const stmt = sqlJsDb.prepare(sql);
-          const params = args.flat();
+          const params = sanitize(args.flat());
           stmt.run(params);
           stmt.free();
           saveDB();
@@ -46,7 +48,7 @@ function createSqlJsAdapter(sqlJsDb, filePath) {
         },
         get: (...args) => {
           const stmt = sqlJsDb.prepare(sql);
-          const params = args.flat();
+          const params = sanitize(args.flat());
           stmt.bind(params);
           if (stmt.step()) {
             const cols = stmt.getColumnNames();
@@ -60,7 +62,8 @@ function createSqlJsAdapter(sqlJsDb, filePath) {
           return undefined;
         },
         all: (...args) => {
-          const results = sqlJsDb.exec(sql, args.flat());
+          const params = sanitize(args.flat());
+          const results = sqlJsDb.exec(sql, params);
           if (!results.length) return [];
           const { columns, values } = results[0];
           return values.map(row => {
@@ -258,6 +261,9 @@ function initDB() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migration: ajouter plan_expires si absent
+  try { db.exec("ALTER TABLE users ADD COLUMN plan_expires TEXT DEFAULT NULL"); } catch(e) {}
 
   // Seed admin par défaut
   const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get('admin@madrasatech.ma');
