@@ -21,10 +21,10 @@
   const userEmailEl = document.getElementById('user-email');
   const userAvatarEl = document.getElementById('user-avatar');
 
-  if (schoolNameEl) schoolNameEl.textContent = user.school_name || 'MadrasaTech';
-  if (userNameEl) userNameEl.textContent = user.name || user.email;
+  if (schoolNameEl) schoolNameEl.textContent = user.school || 'MadrasaTech';
+  if (userNameEl) userNameEl.textContent = user.nom ? (user.prenom + ' ' + user.nom) : user.email;
   if (userEmailEl) userEmailEl.textContent = user.email;
-  if (userAvatarEl) userAvatarEl.textContent = (user.name || user.email).charAt(0).toUpperCase();
+  if (userAvatarEl) userAvatarEl.textContent = (user.prenom || user.email).charAt(0).toUpperCase();
 
   // Titre de la page dans le header
   const headerTitle = document.getElementById('header-title');
@@ -164,7 +164,7 @@
     if (!name) return showToast('Nom requis', 'error');
     try {
       await api.put('/auth/school', { school_name: name });
-      user.school_name = name;
+      user.school = name;
       if (schoolNameEl) schoolNameEl.textContent = name;
       showToast('École mise à jour', 'success');
     } catch(e) { showToast('Erreur', 'error'); }
@@ -176,7 +176,7 @@
     if (!old_password || !new_password) return showToast('Remplir les deux champs', 'error');
     if (new_password.length < 6) return showToast('Mot de passe trop court (6 min)', 'error');
     try {
-      await api.put('/auth/password', { old_password, new_password });
+      await api.put('/auth/password', { current: old_password, nouveau: new_password });
       showToast('Mot de passe changé', 'success');
       document.getElementById('settings-old-pw').value = '';
       document.getElementById('settings-new-pw').value = '';

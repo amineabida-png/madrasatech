@@ -90,7 +90,7 @@ async function login(){
   try{
     const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass}),credentials:'include'});
     const data=await r.json();
-    if(r.ok){ window.location.href='/app'; }
+    if(r.ok){ window.location.href='/'; }
     else{ err.textContent=data.error||'Erreur de connexion'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
   }catch(e){ err.textContent='Erreur réseau. Réessayez.'; err.style.display='block'; btn.disabled=false; btn.textContent='Se connecter'; }
 }
