@@ -66,6 +66,30 @@ function createPgDB(pool) {
   };
 }
 
+// ── Init DB et démarrage ─────────────────────────────────────
+db = createPgDB(pgPool);
+
+async function boot() {
+  console.log('🔌 Connexion à PostgreSQL...');
+  try {
+    await pgPool.query('SELECT 1');
+    console.log('✅ PostgreSQL Railway connecté');
+  } catch(e) {
+    console.error('❌ PostgreSQL connexion échouée:', e.message);
+    process.exit(1);
+  }
+  try {
+    await initDB();
+    console.log('✅ Base de données initialisée');
+  } catch(e) {
+    console.error('❌ initDB error:', e.message);
+    process.exit(1);
+  }
+  startServer();
+}
+
+boot();
+
 async function initDB() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
