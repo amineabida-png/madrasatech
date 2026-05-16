@@ -108,320 +108,160 @@ async function boot() {
 boot();
 
 async function initDB() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nom TEXT NOT NULL,
-      prenom TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT DEFAULT 'admin',
-      school TEXT DEFAULT 'Mon École',
-      plan TEXT DEFAULT 'pro',
-      plan_expires TEXT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login DATETIME,
-      is_demo INTEGER DEFAULT 0
-    );
+  // Create tables with PostgreSQL syntax
+  const tables = [
+    `CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY, nom TEXT NOT NULL, prenom TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
+      role TEXT DEFAULT 'admin', school TEXT DEFAULT 'Mon École',
+      plan TEXT DEFAULT 'pro', plan_expires TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(), last_login TIMESTAMPTZ, is_demo INTEGER DEFAULT 0
+    )`,
+    `CREATE TABLE IF NOT EXISTS school_users (
+      id SERIAL PRIMARY KEY, owner_id INTEGER NOT NULL,
+      nom TEXT NOT NULL, prenom TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
+      role TEXT NOT NULL, telephone TEXT,
+      actif INTEGER DEFAULT 1, eleve_id INTEGER,
+      created_at TIMESTAMPTZ DEFAULT NOW(), last_login TIMESTAMPTZ
+    )`,
+    `CREATE TABLE IF NOT EXISTS eleves (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      nom TEXT NOT NULL, prenom TEXT NOT NULL,
+      date_naissance TEXT, cin_parent TEXT, telephone TEXT, email TEXT,
+      adresse TEXT, classe TEXT, niveau TEXT, genre TEXT DEFAULT 'M',
+      photo TEXT, massar TEXT, date_inscription TEXT,
+      statut TEXT DEFAULT 'actif', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS classes (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      nom TEXT NOT NULL, niveau TEXT, annee_scolaire TEXT,
+      max_eleves INTEGER DEFAULT 35, professeur_principal TEXT, salle TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS professeurs (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      nom TEXT NOT NULL, prenom TEXT NOT NULL, email TEXT, telephone TEXT,
+      cin TEXT, matiere TEXT, type_contrat TEXT DEFAULT 'CDI',
+      salaire DOUBLE PRECISION DEFAULT 0, date_recrutement TEXT,
+      statut TEXT DEFAULT 'actif', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS notes (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, eleve_id INTEGER NOT NULL,
+      matiere TEXT NOT NULL, note DOUBLE PRECISION NOT NULL,
+      coefficient DOUBLE PRECISION DEFAULT 1, trimestre INTEGER DEFAULT 1,
+      annee_scolaire TEXT, type_eval TEXT DEFAULT 'controle',
+      date_eval TEXT, observations TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS absences (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, eleve_id INTEGER NOT NULL,
+      date_absence TEXT NOT NULL, heure_debut TEXT, heure_fin TEXT,
+      motif TEXT, justifiee INTEGER DEFAULT 0, matiere TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS paiements (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, eleve_id INTEGER NOT NULL,
+      mois TEXT NOT NULL, annee INTEGER NOT NULL,
+      montant DOUBLE PRECISION NOT NULL DEFAULT 0,
+      montant_du DOUBLE PRECISION NOT NULL DEFAULT 0,
+      statut TEXT DEFAULT 'impaye', date_paiement TEXT,
+      mode_paiement TEXT DEFAULT 'especes', reference TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS emploi_temps (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      classe TEXT NOT NULL, jour TEXT NOT NULL,
+      heure_debut TEXT NOT NULL, heure_fin TEXT NOT NULL,
+      matiere TEXT NOT NULL, professeur TEXT, salle TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS annonces (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      titre TEXT NOT NULL, contenu TEXT NOT NULL,
+      cible TEXT DEFAULT 'tous', priorite TEXT DEFAULT 'normale',
+      date_publication TEXT, active INTEGER DEFAULT 1,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS depenses (
+      id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+      libelle TEXT NOT NULL, montant DOUBLE PRECISION NOT NULL DEFAULT 0,
+      categorie TEXT DEFAULT 'autre', date_depense TEXT,
+      fournisseur TEXT, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS devoirs (
+      id SERIAL PRIMARY KEY, owner_id INTEGER NOT NULL,
+      titre TEXT NOT NULL, description TEXT, matiere TEXT NOT NULL,
+      classe TEXT, date_limite TEXT, type TEXT DEFAULT 'devoir',
+      fichier_nom TEXT, fichier_data TEXT, fichier_type TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS rendus_devoirs (
+      id SERIAL PRIMARY KEY, devoir_id INTEGER NOT NULL,
+      eleve_user_id INTEGER NOT NULL, contenu TEXT,
+      fichier_nom TEXT, fichier_data TEXT, fichier_type TEXT,
+      statut TEXT DEFAULT 'rendu', note DOUBLE PRECISION,
+      commentaire_prof TEXT, rendu_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY, owner_id INTEGER NOT NULL,
+      from_id INTEGER NOT NULL, from_type TEXT NOT NULL,
+      to_id INTEGER, to_type TEXT, sujet TEXT NOT NULL,
+      contenu TEXT NOT NULL, lu INTEGER DEFAULT 0,
+      parent_id INTEGER, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS calendrier (
+      id SERIAL PRIMARY KEY, owner_id INTEGER NOT NULL,
+      titre TEXT NOT NULL, description TEXT,
+      type TEXT DEFAULT 'evenement', date_debut TEXT NOT NULL,
+      date_fin TEXT, heure_debut TEXT, heure_fin TEXT,
+      couleur TEXT DEFAULT '#6366f1', classes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY, owner_id INTEGER NOT NULL,
+      destinataire TEXT NOT NULL, canal TEXT NOT NULL,
+      objet TEXT NOT NULL, message TEXT NOT NULL,
+      statut TEXT DEFAULT 'en_attente', envoye_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS sessions_demo (
+      id SERIAL PRIMARY KEY, ip TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS demandes_test (
+      id SERIAL PRIMARY KEY, ecole TEXT NOT NULL,
+      nom TEXT NOT NULL, prenom TEXT NOT NULL,
+      telephone TEXT NOT NULL, email TEXT NOT NULL,
+      ville TEXT, nb_eleves TEXT, message TEXT,
+      statut TEXT DEFAULT 'en_attente', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  ];
 
-    CREATE TABLE IF NOT EXISTS school_users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      nom TEXT NOT NULL,
-      prenom TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent','eleve')),
-      telephone TEXT,
-      actif INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login DATETIME,
-      FOREIGN KEY(owner_id) REFERENCES users(id)
-    );
+  for (const sql of tables) {
+    await pgPool.query(sql).catch(e => {
+      if (!e.message.includes('already exists'))
+        console.error('Table create error:', e.message.substring(0,80));
+    });
+  }
 
-    CREATE TABLE IF NOT EXISTS devoirs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      titre TEXT NOT NULL,
-      description TEXT,
-      matiere TEXT NOT NULL,
-      classe TEXT,
-      date_limite TEXT,
-      type TEXT DEFAULT 'devoir',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(owner_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS rendus_devoirs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      devoir_id INTEGER NOT NULL,
-      eleve_user_id INTEGER NOT NULL,
-      contenu TEXT,
-      fichier_nom TEXT,
-      fichier_data TEXT,
-      statut TEXT DEFAULT 'rendu',
-      note REAL,
-      commentaire_prof TEXT,
-      rendu_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(devoir_id) REFERENCES devoirs(id),
-      FOREIGN KEY(eleve_user_id) REFERENCES school_users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS eleves (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      nom TEXT NOT NULL,
-      prenom TEXT NOT NULL,
-      date_naissance TEXT,
-      cin_parent TEXT,
-      telephone TEXT,
-      email TEXT,
-      adresse TEXT,
-      classe TEXT,
-      niveau TEXT,
-      genre TEXT DEFAULT 'M',
-      photo TEXT,
-      massar TEXT,
-      date_inscription TEXT DEFAULT CURRENT_DATE,
-      statut TEXT DEFAULT 'actif',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS classes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      nom TEXT NOT NULL,
-      niveau TEXT,
-      annee_scolaire TEXT,
-      max_eleves INTEGER DEFAULT 35,
-      professeur_principal TEXT,
-      salle TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS professeurs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      nom TEXT NOT NULL,
-      prenom TEXT NOT NULL,
-      email TEXT,
-      telephone TEXT,
-      cin TEXT,
-      matiere TEXT,
-      type_contrat TEXT DEFAULT 'CDI',
-      salaire REAL DEFAULT 0,
-      date_recrutement TEXT DEFAULT CURRENT_DATE,
-      statut TEXT DEFAULT 'actif',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS notes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      eleve_id INTEGER NOT NULL,
-      matiere TEXT NOT NULL,
-      note REAL NOT NULL,
-      coefficient REAL DEFAULT 1,
-      trimestre INTEGER DEFAULT 1,
-      annee_scolaire TEXT,
-      type_eval TEXT DEFAULT 'controle',
-      date_eval TEXT DEFAULT CURRENT_DATE,
-      observations TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      FOREIGN KEY(eleve_id) REFERENCES eleves(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS absences (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      eleve_id INTEGER NOT NULL,
-      date_absence TEXT NOT NULL,
-      heure_debut TEXT,
-      heure_fin TEXT,
-      motif TEXT,
-      justifiee INTEGER DEFAULT 0,
-      matiere TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      FOREIGN KEY(eleve_id) REFERENCES eleves(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS paiements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      eleve_id INTEGER NOT NULL,
-      mois TEXT NOT NULL,
-      annee INTEGER NOT NULL,
-      montant REAL NOT NULL,
-      montant_du REAL NOT NULL,
-      statut TEXT DEFAULT 'impaye',
-      date_paiement TEXT,
-      mode_paiement TEXT DEFAULT 'especes',
-      reference TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      FOREIGN KEY(eleve_id) REFERENCES eleves(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS emploi_temps (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      classe TEXT NOT NULL,
-      jour TEXT NOT NULL,
-      heure_debut TEXT NOT NULL,
-      heure_fin TEXT NOT NULL,
-      matiere TEXT NOT NULL,
-      professeur TEXT,
-      salle TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-
-    CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      from_id INTEGER NOT NULL,
-      from_type TEXT NOT NULL,
-      to_id INTEGER,
-      to_type TEXT,
-      sujet TEXT NOT NULL,
-      contenu TEXT NOT NULL,
-      lu INTEGER DEFAULT 0,
-      parent_id INTEGER DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS calendrier (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      titre TEXT NOT NULL,
-      description TEXT,
-      type TEXT DEFAULT 'evenement',
-      date_debut TEXT NOT NULL,
-      date_fin TEXT,
-      heure_debut TEXT,
-      heure_fin TEXT,
-      couleur TEXT DEFAULT '#6366f1',
-      classes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      destinataire TEXT NOT NULL,
-      canal TEXT NOT NULL,
-      objet TEXT NOT NULL,
-      message TEXT NOT NULL,
-      statut TEXT DEFAULT 'en_attente',
-      envoye_at DATETIME,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS annonces (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      titre TEXT NOT NULL,
-      contenu TEXT NOT NULL,
-      cible TEXT DEFAULT 'tous',
-      priorite TEXT DEFAULT 'normale',
-      date_publication TEXT DEFAULT CURRENT_DATE,
-      active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS depenses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      libelle TEXT NOT NULL,
-      montant REAL NOT NULL,
-      categorie TEXT DEFAULT 'autre',
-      date_depense TEXT DEFAULT CURRENT_DATE,
-      fournisseur TEXT,
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS sessions_demo (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ip TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS demandes_test (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ecole TEXT NOT NULL,
-      nom TEXT NOT NULL,
-      prenom TEXT NOT NULL,
-      telephone TEXT NOT NULL,
-      email TEXT NOT NULL,
-      ville TEXT,
-      nb_eleves TEXT,
-      message TEXT,
-      statut TEXT DEFAULT 'en_attente',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  // Migrations
-  try { db.exec("ALTER TABLE users ADD COLUMN plan_expires TEXT DEFAULT NULL"); } catch(e) {}
-  // Migration school_users: ajouter rôle eleve + colonne eleve_id
-  try { db.exec("ALTER TABLE school_users ADD COLUMN eleve_id INTEGER DEFAULT NULL"); } catch(e) {}
-  try {
-    // Recréer avec nouveau CHECK si besoin
-    const cols = await db.prepare("PRAGMA table_info(school_users)").all();
-    const hasCheck = await db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='school_users'").get();
-    if (hasCheck && hasCheck.sql && !hasCheck.sql.includes("'eleve'")) {
-      // Backup data
-      const rows = await db.prepare("SELECT * FROM school_users").all();
-      db.exec("DROP TABLE school_users");
-      db.exec(`CREATE TABLE school_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        owner_id INTEGER NOT NULL,
-        nom TEXT NOT NULL, prenom TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
-        role TEXT NOT NULL CHECK(role IN ('admin_ecole','professeur','parent','eleve')),
-        telephone TEXT, actif INTEGER DEFAULT 1, eleve_id INTEGER DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME
-      )`);
-      // Restore data
-      rows.forEach(r => {
-        try {
-          db.prepare("INSERT INTO school_users (id,owner_id,nom,prenom,email,password,role,telephone,actif,eleve_id,created_at,last_login) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
-            .run(r.id,r.owner_id,r.nom,r.prenom,r.email,r.password,r.role,r.telephone||'',r.actif||1,r.eleve_id||null,r.created_at,r.last_login||null);
-        } catch(e) {}
-      });
-    }
-  } catch(e) { console.log('Migration school_users:', e.message); }
-  try { db.exec(`CREATE TABLE IF NOT EXISTS devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, matiere TEXT NOT NULL, classe TEXT, date_limite TEXT, type TEXT DEFAULT 'devoir', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
-  try { db.exec(`CREATE TABLE IF NOT EXISTS rendus_devoirs (id INTEGER PRIMARY KEY AUTOINCREMENT, devoir_id INTEGER NOT NULL, eleve_user_id INTEGER NOT NULL, contenu TEXT, fichier_nom TEXT, fichier_data TEXT, statut TEXT DEFAULT 'rendu', note REAL, commentaire_prof TEXT, rendu_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
-  try { db.exec(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, from_id INTEGER NOT NULL, from_type TEXT NOT NULL, to_id INTEGER, to_type TEXT, sujet TEXT NOT NULL, contenu TEXT NOT NULL, lu INTEGER DEFAULT 0, parent_id INTEGER DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
-  try { db.exec(`CREATE TABLE IF NOT EXISTS calendrier (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, titre TEXT NOT NULL, description TEXT, type TEXT DEFAULT 'evenement', date_debut TEXT NOT NULL, date_fin TEXT, heure_debut TEXT, heure_fin TEXT, couleur TEXT DEFAULT '#6366f1', classes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
-  try { db.exec(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, destinataire TEXT NOT NULL, canal TEXT NOT NULL, objet TEXT NOT NULL, message TEXT NOT NULL, statut TEXT DEFAULT 'en_attente', envoye_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(e) {}
-  try { db.exec("CREATE TABLE IF NOT EXISTS school_users (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER NOT NULL, nom TEXT NOT NULL, prenom TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, telephone TEXT, actif INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME)"); } catch(e) {}
-
-  // Seed admin par défaut
-  const adminExists = await db.prepare('SELECT id FROM users WHERE email = ?').get('admin@madrasatech.ma');
-  if (!adminExists) {
+  // Seed admin
+  const adminCheck = await pgPool.query("SELECT id FROM users WHERE email=$1", ['admin@madrasatech.ma']);
+  if (adminCheck.rows.length === 0) {
     const hash = bcrypt.hashSync('admin2024', 10);
-    await db.prepare(`INSERT INTO users (nom,prenom,email,password,role,school,plan,is_demo)
-      VALUES (?,?,?,?,?,?,?,?)`).run('Admin','MadrasaTech','admin@madrasatech.ma',hash,'superadmin','MadrasaTech Demo','pro',0);
-    
-    // Seed demo user
+    const r = await pgPool.query(
+      "INSERT INTO users (nom,prenom,email,password,role,school,plan,is_demo) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+      ['Admin','MadrasaTech','admin@madrasatech.ma',hash,'superadmin','MadrasaTech Demo','pro',0]
+    );
     const demoHash = bcrypt.hashSync('demo2024', 10);
-    const demoId = await db.prepare(`INSERT INTO users (nom,prenom,email,password,role,school,plan,is_demo)
-      VALUES (?,?,?,?,?,?,?,?)`).run('Demo','Utilisateur','demo@madrasatech.ma',demoHash,'admin','Lycée Ibn Khaldoun','demo',1).lastInsertRowid;
-    
-    await seedDemoData(demoId);
+    const r2 = await pgPool.query(
+      "INSERT INTO users (nom,prenom,email,password,role,school,plan,is_demo) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+      ['Demo','Utilisateur','demo@madrasatech.ma',demoHash,'admin','Lycée Ibn Khaldoun','demo',1]
+    );
+    if (r2.rows[0]) await seedDemoData(r2.rows[0].id);
+    console.log('✅ Comptes créés: admin@madrasatech.ma / admin2024');
   }
 }
+
 
 async function seedDemoData(userId) {
   // Classes
@@ -886,18 +726,27 @@ app.get('/api/stats', auth, async (req, res) => {
       return r.rows[0] || {};
     };
 
+    const safe = async (sql, params) => {
+      try { const r = await pgPool.query(sql, params); return r.rows[0] || {}; }
+      catch(e) { console.error('stat query error:', e.message.substring(0,80)); return {}; }
+    };
+    const safeAll = async (sql, params) => {
+      try { const r = await pgPool.query(sql, params); return r.rows; }
+      catch(e) { console.error('stat query error:', e.message.substring(0,80)); return []; }
+    };
+
     const [elR, clR, prR, recR, depR, impCR, impTR, absAR, absTR, niveR, clsR] = await Promise.all([
-      q1("SELECT COUNT(*)::int AS n FROM eleves WHERE user_id=$1 AND statut='actif'", [uid]),
-      q1('SELECT COUNT(*)::int AS n FROM classes WHERE user_id=$1', [uid]),
-      q1("SELECT COUNT(*)::int AS n FROM professeurs WHERE user_id=$1 AND statut='actif'", [uid]),
-      q1("SELECT COALESCE(SUM(montant),0)::float AS n FROM paiements WHERE user_id=$1 AND statut IN ('paye','partiel','payé')", [uid]),
-      q1('SELECT COALESCE(SUM(montant),0)::float AS n FROM depenses WHERE user_id=$1', [uid]),
-      q1("SELECT COUNT(*)::int AS n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid]),
-      q1("SELECT COALESCE(SUM(montant_du-montant),0)::float AS n FROM paiements WHERE user_id=$1 AND statut IN ('impaye','partiel')", [uid]),
-      q1("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1 AND date_absence=CURRENT_DATE::text", [uid]),
-      q1('SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1', [uid]),
-      q("SELECT niveau, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 AND statut='actif' GROUP BY niveau", [uid]),
-      q("SELECT classe, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 AND statut='actif' GROUP BY classe ORDER BY nb DESC LIMIT 10", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM eleves WHERE user_id=$1", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM classes WHERE user_id=$1", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM professeurs WHERE user_id=$1", [uid]),
+      safe("SELECT COALESCE(SUM(montant),0)::float AS n FROM paiements WHERE user_id=$1", [uid]),
+      safe("SELECT COALESCE(SUM(montant),0)::float AS n FROM depenses WHERE user_id=$1", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid]),
+      safe("SELECT COALESCE(SUM(COALESCE(montant_du,0)-COALESCE(montant,0)),0)::float AS n FROM paiements WHERE user_id=$1", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1", [uid]),
+      safe("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1", [uid]),
+      safeAll("SELECT COALESCE(niveau,'autre') AS niveau, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 GROUP BY niveau", [uid]),
+      safeAll("SELECT COALESCE(classe,'—') AS classe, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 GROUP BY classe ORDER BY nb DESC LIMIT 10", [uid]),
     ]);
 
     const totalEleves   = n(elR);
