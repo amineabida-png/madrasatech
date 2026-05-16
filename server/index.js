@@ -710,64 +710,45 @@ app.delete('/api/depenses/:id', auth, async (req, res) => {
 
 // ── STATISTIQUES DASHBOARD ─────────────────────────────────────
 app.get('/api/stats', auth, async (req, res) => {
-  try {
-    const uid = req.user.id;
-    // Helper: safe number from PG row (COUNT returns bigint as string)
-    const n = (row, f='n') => row ? (parseInt(row[f]) || 0) : 0;
-    const f = (row, field='n') => row ? (parseFloat(row[field]) || 0) : 0;
-
-    // Use pgPool directly for safety
-    const q = async (sql, params=[]) => {
+  const uid = req.user.id;
+  const zero = { n: 0 };
+  
+  const runQ = async (sql, params) => {
+    try {
       const r = await pgPool.query(sql, params);
-      return r.rows;
-    };
-    const q1 = async (sql, params=[]) => {
+      return r.rows[0] || zero;
+    } catch(e) {
+      return zero;
+    }
+  };
+  const runAll = async (sql, params) => {
+    try {
       const r = await pgPool.query(sql, params);
-      return r.rows[0] || {};
-    };
+      return r.rows || [];
+    } catch(e) {
+      return [];
+    }
+  };
 
-    const safe = async (sql, params) => {
-      try { const r = await pgPool.query(sql, params); return r.rows[0] || {}; }
-      catch(e) { console.error('stat query error:', e.message.substring(0,80)); return {}; }
-    };
-    const safeAll = async (sql, params) => {
-      try { const r = await pgPool.query(sql, params); return r.rows; }
-      catch(e) { console.error('stat query error:', e.message.substring(0,80)); return []; }
-    };
+  const totalEleves   = parseInt((await runQ('SELECT COUNT(*) as n FROM eleves WHERE user_id=$1', [uid])).n) || 0;
+  const totalClasses  = parseInt((await runQ('SELECT COUNT(*) as n FROM classes WHERE user_id=$1', [uid])).n) || 0;
+  const totalProfs    = parseInt((await runQ('SELECT COUNT(*) as n FROM professeurs WHERE user_id=$1', [uid])).n) || 0;
+  const recettes      = parseFloat((await runQ('SELECT COALESCE(SUM(montant),0) as n FROM paiements WHERE user_id=$1', [uid])).n) || 0;
+  const depenses      = parseFloat((await runQ('SELECT COALESCE(SUM(montant),0) as n FROM depenses WHERE user_id=$1', [uid])).n) || 0;
+  const impayesCount  = parseInt((await runQ("SELECT COUNT(*) as n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid])).n) || 0;
+  const impayesTotal  = parseFloat((await runQ('SELECT COALESCE(SUM(COALESCE(montant_du,0)-COALESCE(montant,0)),0) as n FROM paiements WHERE user_id=$1', [uid])).n) || 0;
+  const absAujourd    = parseInt((await runQ('SELECT COUNT(*) as n FROM absences WHERE user_id=$1', [uid])).n) || 0;
+  const totalAbsences = absAujourd;
+  const parNiveau     = await runAll(`SELECT COALESCE(niveau,'autre') AS niveau, COUNT(*) AS nb FROM eleves WHERE user_id=$1 GROUP BY niveau`, [uid]);
+  const parClasse     = await runAll(`SELECT COALESCE(classe,'—') AS classe, COUNT(*) AS nb FROM eleves WHERE user_id=$1 GROUP BY classe ORDER BY nb DESC LIMIT 10`, [uid]);
 
-    const [elR, clR, prR, recR, depR, impCR, impTR, absAR, absTR, niveR, clsR] = await Promise.all([
-      safe("SELECT COUNT(*)::int AS n FROM eleves WHERE user_id=$1", [uid]),
-      safe("SELECT COUNT(*)::int AS n FROM classes WHERE user_id=$1", [uid]),
-      safe("SELECT COUNT(*)::int AS n FROM professeurs WHERE user_id=$1", [uid]),
-      safe("SELECT COALESCE(SUM(montant),0)::float AS n FROM paiements WHERE user_id=$1", [uid]),
-      safe("SELECT COALESCE(SUM(montant),0)::float AS n FROM depenses WHERE user_id=$1", [uid]),
-      safe("SELECT COUNT(*)::int AS n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid]),
-      safe("SELECT COALESCE(SUM(COALESCE(montant_du,0)-COALESCE(montant,0)),0)::float AS n FROM paiements WHERE user_id=$1", [uid]),
-      safe("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1", [uid]),
-      safe("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1", [uid]),
-      safeAll("SELECT COALESCE(niveau,'autre') AS niveau, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 GROUP BY niveau", [uid]),
-      safeAll("SELECT COALESCE(classe,'—') AS classe, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 GROUP BY classe ORDER BY nb DESC LIMIT 10", [uid]),
-    ]);
-
-    const totalEleves   = n(elR);
-    const totalClasses  = n(clR);
-    const totalProfs    = n(prR);
-    const recettes      = f(recR);
-    const depenses      = f(depR);
-    const impayesCount  = n(impCR);
-    const impayesTotal  = f(impTR);
-    const absAujourd    = n(absAR);
-    const totalAbsences = n(absTR);
-    const parNiveau     = niveR;
-    const parClasse     = clsR;
-
-    res.json({ totalEleves, totalClasses, totalProfs, recettes, depenses,
-      benefice: recettes-depenses, impayesCount, impayesTotal,
-      absAujourd, totalAbsences, parNiveau, parClasse });
-  } catch(e) {
-    console.error('stats error:', e.message, e.stack?.split('\n')[1]);
-    res.status(500).json({ error: 'Erreur serveur: ' + e.message });
-  }
+  res.json({
+    totalEleves, totalClasses, totalProfs,
+    recettes, depenses, benefice: recettes - depenses,
+    impayesCount, impayesTotal,
+    absAujourd, totalAbsences,
+    parNiveau, parClasse
+  });
 });
 
 // ── TÉLÉCHARGEMENT FICHIERS ──────────────────────────────────
