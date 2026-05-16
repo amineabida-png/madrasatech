@@ -9,6 +9,20 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
+
+// ── Upload fichiers (multer) ───────────────────────────────────
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = ['image/jpeg','image/png','image/gif','image/webp',
+      'application/pdf','application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'];
+    cb(null, ok.includes(file.mimetype));
+  }
+});
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'madrasatech-secret-2024-xK9mP2qR';
 
@@ -147,30 +161,7 @@ function createPgAdapter(pool) {
 const initSqlJs = require('sql.js');
 
 async function initDatabase() {
-  // Try PostgreSQL first if DATABASE_URL is set
-  const DATABASE_URL = process.env.DATABASE_URL;
-  
-  if (DATABASE_URL) {
-    try {
-      const { Pool } = require('pg');
-      const pool = new Pool({ 
-        connectionString: DATABASE_URL, 
-        ssl: { rejectUnauthorized: false },
-        max: 5
-      });
-      await pool.query('SELECT 1');
-      console.log('✅ PostgreSQL connecté (Neon)');
-      usePostgres = true;
-      // For pg, we use a different approach — rewrite key queries async
-      global._pgPool = pool;
-      // Still use sql.js as main interface but sync pg writes
-      // Best approach: use sql.js for reads, pg for persistence
-    } catch(e) {
-      console.log('⚠️ Postgres indisponible:', e.message.substring(0,50), '— utilisation sql.js');
-    }
-  }
-
-  // Always use sql.js as primary (synchronous interface)
+  // sql.js uniquement — fiable et synchrone
   const SQL = await initSqlJs();
   let sqlJsDb;
   if (fs.existsSync(dbPath)) {
@@ -182,14 +173,17 @@ async function initDatabase() {
     console.log('✅ sql.js nouvelle base de données');
   }
   db = createSqlJsAdapter(sqlJsDb, dbPath);
-  
   initDB();
   startServer();
 }
 
 initDatabase().catch(err => {
-  console.error('Erreur init DB:', err);
-  process.exit(1);
+  console.error('Erreur init DB:', err.message);
+  // Retry once
+  setTimeout(() => initDatabase().catch(e => {
+    console.error('Retry failed:', e.message);
+    process.exit(1);
+  }), 2000);
 });
 
 function initDB() {
