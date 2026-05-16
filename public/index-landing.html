@@ -4,165 +4,238 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MadrasaTech — Système de Gestion Scolaire Maroc</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#1a56db;--primary-dark:#1e429f;--gold:#d97706;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;color:var(--text);overflow-x:hidden}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0A0A0F;
+  --ink2:#1A1A2E;
+  --cream:#F5F0E8;
+  --gold:#C9A84C;
+  --gold2:#E8C96A;
+  --accent:#2563EB;
+  --accent2:#60A5FA;
+  --muted:#6B7280;
+  --white:#FFFFFF;
+  --border:rgba(201,168,76,0.2);
+}
+html{scroll-behavior:smooth;cursor:default}
+body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--cream);overflow-x:hidden;line-height:1.6}
 
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 5%}
-.nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px}
-.nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:var(--primary);text-decoration:none}
-.nav-logo span{font-size:28px}
-.nav-links{display:flex;align-items:center;gap:32px}
-.nav-links a{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;transition:.2s}
-.nav-links a:hover{color:var(--primary)}
-.nav-cta{background:var(--primary);color:#fff!important;padding:9px 20px;border-radius:10px}
-.nav-cta:hover{background:var(--primary-dark)!important;opacity:1!important}
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.4}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:24px 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;transition:all .4s}
+nav.scrolled{background:rgba(10,10,15,.9);backdrop-filter:blur(20px);border-bottom-color:var(--border)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.nav-logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.nav-logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--cream);letter-spacing:-.5px}
+.nav-links{display:flex;align-items:center;gap:36px}
+.nav-links a{font-size:13px;font-weight:500;color:rgba(245,240,232,.6);text-decoration:none;letter-spacing:.05em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:var(--ink)!important;padding:10px 22px;border-radius:8px;font-weight:700!important;letter-spacing:.03em!important;text-transform:none!important;transition:all .2s!important}
+.nav-cta:hover{background:var(--gold2)!important;transform:translateY(-1px)}
 @media(max-width:768px){.nav-links a:not(.nav-cta){display:none}}
 
-/* HERO */
-.hero{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 40%,#1a56db 100%);display:flex;align-items:center;padding:80px 5% 60px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.hero-inner{max-width:1200px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-@media(max-width:900px){.hero-inner{grid-template-columns:1fr}}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 16px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:24px}
-.hero-title{font-size:clamp(32px,5vw,56px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:20px}
-.hero-title span{color:#60a5fa}
-.hero-sub{font-size:18px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:36px;max-width:480px}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
-.btn-hero-primary{background:#fff;color:var(--primary);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:8px}
-.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,255,255,.3)}
-.btn-hero-secondary{background:transparent;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;border:2px solid rgba(255,255,255,.4);transition:.2s;display:inline-flex;align-items:center;gap:8px}
-.btn-hero-secondary:hover{background:rgba(255,255,255,.1)}
-.hero-stats{display:flex;gap:32px;margin-top:48px;flex-wrap:wrap}
-.hero-stat{text-align:center}
-.hero-stat-val{font-size:28px;font-weight:900;color:#fff}
-.hero-stat-lbl{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
+/* ── HERO ── */
+.hero{min-height:100vh;padding:140px 5% 80px;position:relative;display:flex;align-items:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,168,76,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.06) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black,transparent)}
+.hero-glow{position:absolute;top:-20%;right:-10%;width:700px;height:700px;background:radial-gradient(circle,rgba(37,99,235,.15) 0%,transparent 70%);border-radius:50%}
+.hero-glow2{position:absolute;bottom:-20%;left:-5%;width:500px;height:500px;background:radial-gradient(circle,rgba(201,168,76,.1) 0%,transparent 70%);border-radius:50%}
+.hero-inner{max-width:1200px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;z-index:1}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;gap:60px}}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 16px;border-radius:99px;font-size:12px;font-weight:500;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:28px;background:rgba(201,168,76,.05)}
+.hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(40px,5.5vw,72px);font-weight:800;line-height:1.05;letter-spacing:-2px;color:var(--cream);margin-bottom:24px}
+h1 .gold{color:var(--gold);font-style:italic}
+h1 .outline{-webkit-text-stroke:1px var(--cream);color:transparent}
+.hero-desc{font-size:17px;color:rgba(245,240,232,.65);line-height:1.75;max-width:480px;margin-bottom:40px}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary{background:var(--gold);color:var(--ink);padding:14px 30px;border-radius:10px;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .25s;letter-spacing:-.2px}
+.btn-primary:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 30px rgba(201,168,76,.3)}
+.btn-ghost{border:1px solid rgba(245,240,232,.2);color:var(--cream);padding:14px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .25s}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.hero-stats{display:flex;gap:40px;margin-top:52px;padding-top:40px;border-top:1px solid var(--border);flex-wrap:wrap}
+.hero-stat{}
+.hero-stat-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--cream);letter-spacing:-1px}
+.hero-stat-num span{color:var(--gold)}
+.hero-stat-lbl{font-size:12px;color:rgba(245,240,232,.5);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+/* HERO VISUAL */
 .hero-visual{position:relative}
-.hero-mockup{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;backdrop-filter:blur(10px)}
-.mockup-header{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}
-.mockup-dot{width:10px;height:10px;border-radius:50%}
-.mockup-title{color:rgba(255,255,255,.8);font-size:13px;font-weight:600;margin-left:4px}
-.mockup-stat{background:rgba(255,255,255,.06);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.mockup-icon{font-size:20px}
-.mockup-val{font-size:18px;font-weight:800;color:#fff}
-.mockup-lbl{font-size:11px;color:rgba(255,255,255,.5)}
-.mockup-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:6px;overflow:hidden}
-.mockup-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#60a5fa,#34d399)}
+.dash-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:24px;backdrop-filter:blur(20px)}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.dash-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:rgba(245,240,232,.8)}
+.dash-status{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(201,168,76,.8)}
+.dash-dot{width:6px;height:6px;background:#22C55E;border-radius:50%;box-shadow:0 0 8px #22C55E}
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 16px}
+.kpi-num{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--cream)}
+.kpi-lbl{font-size:11px;color:rgba(245,240,232,.4);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.kpi-trend{font-size:11px;font-weight:600;margin-top:4px}
+.kpi-trend.up{color:#22C55E}.kpi-trend.warn{color:var(--gold)}
+.bar-row{margin-bottom:10px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;color:rgba(245,240,232,.5);margin-bottom:6px}
+.bar-track{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.floating-badge{position:absolute;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:600;color:#22C55E;backdrop-filter:blur(10px)}
+.fb1{top:-20px;right:-20px;animation:float1 4s ease-in-out infinite}
+.fb2{bottom:-16px;left:-24px;animation:float2 5s ease-in-out infinite;color:var(--gold);background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3)}
+@keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
 
-/* FEATURES */
-.section{padding:80px 5%}
+/* ── MODULES ── */
+.section{padding:100px 5%}
 .section-inner{max-width:1200px;margin:auto}
-.section-label{font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
-.section-title{font-size:clamp(28px,4vw,42px);font-weight:800;color:var(--text);margin-bottom:16px;line-height:1.2}
-.section-sub{font-size:17px;color:var(--muted);max-width:600px;line-height:1.7;margin-bottom:48px}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
-.feature-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;transition:box-shadow .2s,transform .2s}
-.feature-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.08);transform:translateY(-3px)}
-.feature-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
-.feature-title{font-size:17px;font-weight:700;margin-bottom:8px}
-.feature-desc{font-size:14px;color:var(--muted);line-height:1.6}
+.section-tag{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(32px,4vw,52px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px;color:var(--cream)}
+.section-sub{font-size:17px;color:rgba(245,240,232,.55);max-width:560px;line-height:1.7;margin-bottom:60px}
 
-/* PRICING */
-.pricing-section{background:var(--bg);padding:80px 5%}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto}
+.modules-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:180px;gap:12px}
+@media(max-width:768px){.modules-bento{grid-template-columns:repeat(2,1fr);grid-auto-rows:140px}}
+.bento{border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);position:relative;overflow:hidden;transition:all .3s;cursor:default}
+.bento:hover{border-color:rgba(201,168,76,.3);background:rgba(255,255,255,.05);transform:translateY(-3px)}
+.bento::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(201,168,76,.08),transparent 60%)}
+.bento:hover::before{opacity:1}
+.bento-icon{font-size:28px;margin-bottom:12px}
+.bento-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--cream);margin-bottom:6px}
+.bento-desc{font-size:12px;color:rgba(245,240,232,.45);line-height:1.5}
+.bento-accent{position:absolute;bottom:16px;right:16px;font-size:11px;font-weight:600;color:var(--gold);opacity:.6}
+/* Sizes */
+.b-2{grid-column:span 4}.b-3{grid-column:span 3}.b-4{grid-column:span 6}.b-full{grid-column:span 12;grid-row:span 1}
+@media(max-width:768px){.b-2,.b-3,.b-4,.b-full{grid-column:span 1}}
+/* Colors */
+.bento-blue{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.15)}
+.bento-gold{background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.15)}
+.bento-green{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.15)}
+.bento-purple{background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.15)}
+
+/* ── PRICING ── */
+.pricing-section{padding:100px 5%;background:rgba(255,255,255,.015)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1000px;margin:0 auto}
 @media(max-width:768px){.pricing-grid{grid-template-columns:1fr}}
-.pricing-card{background:#fff;border:2px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;position:relative;transition:.2s}
-.pricing-card.popular{border-color:var(--primary);box-shadow:0 8px 40px rgba(26,86,219,.15)}
-.pricing-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;font-size:12px;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap}
-.pricing-period{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
-.pricing-price{font-size:42px;font-weight:900;color:var(--text);margin-bottom:4px;line-height:1}
-.pricing-price sup{font-size:20px;vertical-align:top;margin-top:8px}
-.pricing-price span{font-size:16px;font-weight:500;color:var(--muted)}
-.pricing-save{font-size:12px;color:#059669;font-weight:600;margin-bottom:24px;min-height:18px}
-.pricing-features{text-align:left;margin-bottom:28px}
-.pricing-feature{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#374151;margin-bottom:10px}
-.pricing-feature::before{content:'✅';flex-shrink:0;font-size:13px}
-.pricing-btn{display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;transition:.2s;cursor:pointer;border:none;font-family:inherit}
-.pricing-btn-primary{background:var(--primary);color:#fff}
-.pricing-btn-primary:hover{background:var(--primary-dark)}
-.pricing-btn-outline{background:var(--bg);color:var(--primary);border:2px solid var(--primary)}
-.pricing-btn-outline:hover{background:var(--primary);color:#fff}
-.pricing-btn-gold{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
-.pricing-btn-gold:hover{opacity:.9}
+.pricing-card{border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 28px;position:relative;transition:all .3s;background:rgba(255,255,255,.02)}
+.pricing-card:hover{transform:translateY(-4px);border-color:rgba(201,168,76,.3)}
+.pricing-card.featured{border-color:var(--gold);background:rgba(201,168,76,.06);box-shadow:0 0 80px rgba(201,168,76,.1)}
+.pricing-featured-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--ink);font-size:11px;font-weight:800;padding:4px 16px;border-radius:99px;white-space:nowrap;font-family:'Syne',sans-serif;letter-spacing:.05em;text-transform:uppercase}
+.pricing-period{font-size:12px;font-weight:600;color:rgba(245,240,232,.4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.pricing-amount{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--cream);letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.pricing-amount sup{font-size:20px;vertical-align:top;margin-top:10px;color:var(--gold)}
+.pricing-amount small{font-size:16px;color:rgba(245,240,232,.4);font-weight:400;letter-spacing:0}
+.pricing-save{font-size:12px;font-weight:600;color:#22C55E;margin-bottom:28px;min-height:20px}
+.pricing-sep{height:1px;background:rgba(255,255,255,.06);margin-bottom:24px}
+.pricing-features{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.pf{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:rgba(245,240,232,.7)}
+.pf::before{content:'✓';color:var(--gold);font-weight:800;font-size:12px;margin-top:2px;flex-shrink:0}
+.pricing-btn{display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;text-align:center;text-decoration:none;transition:all .25s;letter-spacing:-.2px;cursor:pointer;border:none}
+.pricing-btn-gold{background:var(--gold);color:var(--ink)}
+.pricing-btn-gold:hover{background:var(--gold2);box-shadow:0 8px 24px rgba(201,168,76,.3)}
+.pricing-btn-outline{background:transparent;color:var(--cream);border:1px solid rgba(255,255,255,.15)}
+.pricing-btn-outline:hover{border-color:var(--gold);color:var(--gold)}
 
-/* MODULES SHOWCASE */
-.modules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
-.module-chip{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;font-size:13px;font-weight:600;color:#374151}
-.module-chip-icon{font-size:24px;display:block;margin-bottom:6px}
+/* TEST 24H */
+.test-box{max-width:600px;margin:48px auto 0;border:1px dashed rgba(201,168,76,.3);border-radius:16px;padding:32px;text-align:center;background:rgba(201,168,76,.03)}
+.test-box-icon{font-size:36px;margin-bottom:12px}
+.test-box-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--cream);margin-bottom:8px}
+.test-box-sub{font-size:14px;color:rgba(245,240,232,.5);margin-bottom:20px}
 
-/* CTA */
-.cta-section{background:linear-gradient(135deg,var(--primary),#7c3aed);padding:80px 5%;text-align:center}
-.cta-title{font-size:clamp(28px,4vw,44px);font-weight:900;color:#fff;margin-bottom:16px}
-.cta-sub{font-size:18px;color:rgba(255,255,255,.8);margin-bottom:36px}
+/* ── CTA ── */
+.cta-section{padding:100px 5%;text-align:center;position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(201,168,76,.08),transparent)}
+.cta-title{font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,64px);font-weight:800;letter-spacing:-2px;line-height:1.05;color:var(--cream);margin-bottom:20px;position:relative}
+.cta-title .gold{color:var(--gold)}
+.cta-sub{font-size:18px;color:rgba(245,240,232,.5);margin-bottom:40px;position:relative}
 
-/* FOOTER */
-footer{background:#0f172a;padding:40px 5%;text-align:center}
-.footer-logo{font-size:22px;font-weight:800;color:#fff;margin-bottom:8px}
-.footer-sub{font-size:13px;color:rgba(255,255,255,.4)}
+/* ── FOOTER ── */
+footer{padding:40px 5%;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.footer-logo{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--cream)}
+.footer-logo span{color:var(--gold)}
+.footer-copy{font-size:13px;color:rgba(245,240,232,.3)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:13px;color:rgba(245,240,232,.4);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--gold)}
+
+/* ANIMATIONS */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav>
-  <div class="nav-inner">
-    <a href="#" class="nav-logo"><span>🏫</span> MadrasaTech</a>
-    <div class="nav-links">
-      <a href="#modules">Modules</a>
-      <a href="#tarifs">Tarifs</a>
-      <a href="/login.html" class="nav-cta">Se connecter →</a>
-    </div>
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">🏫</div>
+    <span class="nav-logo-text">MadrasaTech</span>
+  </a>
+  <div class="nav-links">
+    <a href="#modules">Modules</a>
+    <a href="#tarifs">Tarifs</a>
+    <a href="/login.html" class="nav-cta">Se connecter →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+  </div>
   <div class="hero-inner">
-    <div>
-      <div class="hero-badge">🇲🇦 Conçu pour les écoles marocaines</div>
-      <h1 class="hero-title">Gérez votre école<br><span>intelligemment</span></h1>
-      <p class="hero-sub">MadrasaTech est le système de gestion scolaire tout-en-un qui simplifie la vie des directeurs, professeurs, parents et élèves au Maroc.</p>
+    <div class="reveal">
+      <div class="hero-tag"><span class="hero-tag-dot"></span>🇲🇦 Conçu pour le Maroc</div>
+      <h1>Gérez votre<br>école <span class="gold">sans</span><br><span class="outline">limites</span></h1>
+      <p class="hero-desc">La plateforme tout-en-un qui simplifie la gestion scolaire — des notes aux paiements, des devoirs aux certificats. Moderne, rapide, pensé pour les écoles marocaines.</p>
       <div class="hero-btns">
-        <a href="#tarifs" class="btn-hero-primary">🚀 Commencer maintenant</a>
-        <a href="/login.html" class="btn-hero-secondary">Se connecter →</a>
+        <a href="#tarifs" class="btn-primary">Commencer maintenant →</a>
+        <a href="/login.html" class="btn-ghost">Se connecter</a>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="hero-stat-val">∞</div><div class="hero-stat-lbl">Élèves gérés</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">18+</div><div class="hero-stat-lbl">Modules intégrés</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">100%</div><div class="hero-stat-lbl">En ligne, partout</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">∞<span></span></div><div class="hero-stat-lbl">Élèves gérés</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">18<span>+</span></div><div class="hero-stat-lbl">Modules intégrés</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">100<span>%</span></div><div class="hero-stat-lbl">En ligne</div></div>
       </div>
     </div>
-    <div class="hero-visual">
-      <div class="hero-mockup">
-        <div class="mockup-header">
-          <div class="mockup-dot" style="background:#ef4444"></div>
-          <div class="mockup-dot" style="background:#f59e0b"></div>
-          <div class="mockup-dot" style="background:#10b981"></div>
-          <span class="mockup-title">Tableau de bord — MadrasaTech</span>
+    <div class="reveal" style="transition-delay:.2s">
+      <div style="position:relative">
+        <div class="floating-badge fb1">✅ +12 élèves inscrits</div>
+        <div class="dash-card">
+          <div class="dash-header">
+            <span class="dash-title">Tableau de bord</span>
+            <span class="dash-status"><span class="dash-dot"></span> En direct</span>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="kpi-num">342</div>
+              <div class="kpi-lbl">Élèves</div>
+              <div class="kpi-trend up">↑ +8 ce mois</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-num">94%</div>
+              <div class="kpi-lbl">Présence</div>
+              <div class="kpi-trend up">↑ Excellent</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-num">48k</div>
+              <div class="kpi-lbl">MAD / mois</div>
+              <div class="kpi-trend warn">→ Stable</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-num">13.8</div>
+              <div class="kpi-lbl">Moy. /20</div>
+              <div class="kpi-trend up">↑ Bien</div>
+            </div>
+          </div>
+          <div class="bar-row"><div class="bar-label"><span>1ère BAC A</span><span>28/30</span></div><div class="bar-track"><div class="bar-fill" style="width:93%;background:linear-gradient(90deg,#C9A84C,#E8C96A)"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>2ème BAC SPC</span><span>25/30</span></div><div class="bar-track"><div class="bar-fill" style="width:83%;background:linear-gradient(90deg,#2563EB,#60A5FA)"></div></div></div>
+          <div class="bar-row"><div class="bar-label"><span>3ème Collège</span><span>22/28</span></div><div class="bar-track"><div class="bar-fill" style="width:78%;background:linear-gradient(90deg,#22C55E,#4ADE80)"></div></div></div>
         </div>
-        <div class="mockup-stat">
-          <div class="mockup-icon">👨‍🎓</div>
-          <div><div class="mockup-val">342</div><div class="mockup-lbl">Élèves inscrits</div></div>
-        </div>
-        <div class="mockup-stat">
-          <div class="mockup-icon">✅</div>
-          <div><div class="mockup-val">94%</div><div class="mockup-lbl">Taux de présence</div>
-          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:94%"></div></div></div>
-        </div>
-        <div class="mockup-stat">
-          <div class="mockup-icon">💰</div>
-          <div><div class="mockup-val">48 600 MAD</div><div class="mockup-lbl">Paiements ce mois</div>
-          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:78%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div></div></div>
-        </div>
-        <div class="mockup-stat">
-          <div class="mockup-icon">📊</div>
-          <div><div class="mockup-val">13.8/20</div><div class="mockup-lbl">Moyenne générale</div>
-          <div class="mockup-bar"><div class="mockup-bar-fill" style="width:69%;background:linear-gradient(90deg,#8b5cf6,#6366f1)"></div></div></div>
-        </div>
+        <div class="floating-badge fb2">💰 800 MAD encaissés</div>
       </div>
     </div>
   </div>
@@ -171,114 +244,135 @@ footer{background:#0f172a;padding:40px 5%;text-align:center}
 <!-- MODULES -->
 <section class="section" id="modules">
   <div class="section-inner">
-    <div class="section-label">Fonctionnalités</div>
-    <h2 class="section-title">Tout ce dont votre école a besoin</h2>
-    <p class="section-sub">18 modules intégrés pour une gestion complète et sans effort de votre établissement scolaire.</p>
-    <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon" style="background:#eff6ff">📊</div><div class="feature-title">Tableau de bord</div><div class="feature-desc">Vue d'ensemble en temps réel : élèves, paiements, absences et performances.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#f0fdf4">👨‍🎓</div><div class="feature-title">Gestion des élèves</div><div class="feature-desc">Fiches complètes, bulletins, historique des notes et des absences par élève.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#fef9c3">📅</div><div class="feature-title">Emploi du temps</div><div class="feature-desc">Planning hebdomadaire par classe, gestion des cours et des salles.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#fdf4ff">📊</div><div class="feature-title">Notes & Bulletins</div><div class="feature-desc">Saisie des notes, calcul des moyennes et génération de bulletins PDF.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#fff7ed">💰</div><div class="feature-title">Paiements</div><div class="feature-desc">Suivi des scolarités, encaissements et rappels automatiques.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#eff6ff">💬</div><div class="feature-title">Messagerie interne</div><div class="feature-desc">Communication directe entre admin, profs, parents et élèves.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#fef2f2">📜</div><div class="feature-title">Certificats officiels</div><div class="feature-desc">Génération automatique de certificats de scolarité, bulletins et attestations.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#f0fdf4">🔔</div><div class="feature-title">Notifications SMS/Email</div><div class="feature-desc">Alertes automatiques aux parents : absences, notes, paiements.</div></div>
-      <div class="feature-card"><div class="feature-icon" style="background:#faf5ff">📚</div><div class="feature-title">Devoirs en ligne</div><div class="feature-desc">Publication et rendu de devoirs directement depuis l'application.</div></div>
+    <div class="section-tag reveal">Fonctionnalités</div>
+    <h2 class="section-title reveal">Tout ce dont<br>votre école a besoin</h2>
+    <p class="section-sub reveal">18 modules intégrés, zéro friction. De la gestion des élèves aux certificats officiels.</p>
+    <div class="modules-bento reveal">
+      <div class="bento b-2 bento-blue"><div class="bento-icon">👨‍🎓</div><div class="bento-title">Élèves</div><div class="bento-desc">Fiches complètes, bulletins, historique</div><span class="bento-accent">∞ Illimités</span></div>
+      <div class="bento b-2 bento-gold"><div class="bento-icon">📊</div><div class="bento-title">Notes & Bulletins</div><div class="bento-desc">Saisie, moyennes, PDF automatiques</div><span class="bento-accent">3 trimestres</span></div>
+      <div class="bento b-2 bento-green"><div class="bento-icon">💰</div><div class="bento-title">Paiements</div><div class="bento-desc">Encaissement et suivi des scolarités</div><span class="bento-accent">Multi-modes</span></div>
+      <div class="bento b-3 bento-purple"><div class="bento-icon">📅</div><div class="bento-title">Absences</div><div class="bento-desc">Suivi et justifications</div></div>
+      <div class="bento b-3"><div class="bento-icon">📆</div><div class="bento-title">Emploi du temps</div><div class="bento-desc">Planning hebdomadaire visuel</div></div>
+      <div class="bento b-3 bento-blue"><div class="bento-icon">📚</div><div class="bento-title">Devoirs</div><div class="bento-desc">Publication + rendu en ligne + upload</div></div>
+      <div class="bento b-3 bento-gold"><div class="bento-icon">💬</div><div class="bento-title">Messagerie</div><div class="bento-desc">Communication interne</div></div>
+      <div class="bento b-3 bento-green"><div class="bento-icon">🔔</div><div class="bento-title">Notifications</div><div class="bento-desc">SMS, Email, WhatsApp</div><span class="bento-accent">Automatique</span></div>
+      <div class="bento b-3 bento-purple"><div class="bento-icon">📜</div><div class="bento-title">Certificats</div><div class="bento-desc">Documents officiels en 1 clic</div></div>
+      <div class="bento b-3"><div class="bento-icon">👥</div><div class="bento-title">Utilisateurs</div><div class="bento-desc">Admins, profs, parents, élèves</div></div>
     </div>
   </div>
 </section>
 
-<!-- TARIFS -->
+<!-- PRICING -->
 <section class="pricing-section" id="tarifs">
-  <div class="section-inner" style="text-align:center">
-    <div class="section-label" style="text-align:center">Tarifs transparents</div>
-    <h2 class="section-title" style="text-align:center;max-width:600px;margin:0 auto 16px">Un seul prix, toutes les fonctionnalités</h2>
-    <p class="section-sub" style="text-align:center;margin:0 auto 48px">Pas de frais cachés. Pas de limite d'utilisateurs. Toutes les mises à jour incluses.</p>
-    <div class="pricing-grid">
+  <div class="section-inner">
+    <div class="section-tag reveal" style="text-align:center">Tarifs</div>
+    <h2 class="section-title reveal" style="text-align:center;max-width:100%">Simple et transparent</h2>
+    <p class="section-sub reveal" style="text-align:center;margin:0 auto 60px">Toutes les fonctionnalités incluses. Aucun frais caché. Aucune limite d'utilisateurs.</p>
 
-      <!-- 30 JOURS -->
+    <div class="pricing-grid reveal">
+      <!-- 30J -->
       <div class="pricing-card">
         <div class="pricing-period">Mensuel</div>
-        <div class="pricing-price"><sup>MAD</sup>399<span>/mois</span></div>
+        <div class="pricing-amount"><sup>MAD</sup>399<small>/mois</small></div>
         <div class="pricing-save">&nbsp;</div>
+        <div class="pricing-sep"></div>
         <div class="pricing-features">
-          <div class="pricing-feature">Élèves illimités</div>
-          <div class="pricing-feature">Tous les modules</div>
-          <div class="pricing-feature">Professeurs illimités</div>
-          <div class="pricing-feature">Parents illimités</div>
-          <div class="pricing-feature">Support email</div>
-          <div class="pricing-feature">Mises à jour incluses</div>
+          <div class="pf">Élèves, profs, parents illimités</div>
+          <div class="pf">Tous les 18 modules</div>
+          <div class="pf">Certificats & documents PDF</div>
+          <div class="pf">Notifications SMS/Email</div>
+          <div class="pf">Support par email</div>
         </div>
-        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-outline">Démarrer →</a>
+        <a href="/login.html" class="pricing-btn pricing-btn-outline">Démarrer →</a>
       </div>
 
       <!-- 1 AN -->
-      <div class="pricing-card popular">
-        <div class="pricing-badge">⭐ Le plus populaire</div>
+      <div class="pricing-card featured">
+        <div class="pricing-featured-tag">⭐ Le plus populaire</div>
         <div class="pricing-period">Annuel</div>
-        <div class="pricing-price"><sup>MAD</sup>3&nbsp;999<span>/an</span></div>
-        <div class="pricing-save">💚 Économisez 789 MAD vs mensuel</div>
+        <div class="pricing-amount"><sup>MAD</sup>3 999<small>/an</small></div>
+        <div class="pricing-save">💚 Économisez 789 MAD/an</div>
+        <div class="pricing-sep"></div>
         <div class="pricing-features">
-          <div class="pricing-feature">Élèves illimités</div>
-          <div class="pricing-feature">Tous les modules</div>
-          <div class="pricing-feature">Professeurs illimités</div>
-          <div class="pricing-feature">Parents illimités</div>
-          <div class="pricing-feature">Support prioritaire</div>
-          <div class="pricing-feature">Mises à jour incluses</div>
-          <div class="pricing-feature">Formation offerte</div>
+          <div class="pf">Tout du plan mensuel</div>
+          <div class="pf">Support prioritaire 48h</div>
+          <div class="pf">Formation incluse</div>
+          <div class="pf">Mises à jour automatiques</div>
+          <div class="pf">Données sécurisées & sauvegardées</div>
         </div>
-        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-primary">Commencer →</a>
+        <a href="/login.html" class="pricing-btn pricing-btn-gold">Commencer →</a>
       </div>
 
-      <!-- À VIE -->
+      <!-- VIE -->
       <div class="pricing-card">
         <div class="pricing-period">À vie</div>
-        <div class="pricing-price"><sup>MAD</sup>12&nbsp;499<span> unique</span></div>
-        <div class="pricing-save">♾️ Payez une fois, utilisez à vie</div>
+        <div class="pricing-amount"><sup>MAD</sup>12 499<small> unique</small></div>
+        <div class="pricing-save">♾️ Payez une fois, pour toujours</div>
+        <div class="pricing-sep"></div>
         <div class="pricing-features">
-          <div class="pricing-feature">Élèves illimités</div>
-          <div class="pricing-feature">Tous les modules</div>
-          <div class="pricing-feature">Professeurs illimités</div>
-          <div class="pricing-feature">Parents illimités</div>
-          <div class="pricing-feature">Support VIP dédié</div>
-          <div class="pricing-feature">Toutes futures fonctionnalités</div>
-          <div class="pricing-feature">Installation personnalisée</div>
+          <div class="pf">Tout du plan annuel</div>
+          <div class="pf">Support VIP dédié</div>
+          <div class="pf">Toutes futures fonctionnalités</div>
+          <div class="pf">Installation personnalisée</div>
+          <div class="pf">Accès anticipé nouveautés</div>
         </div>
-        <a href="/login.html" onclick="ouvrirTest(event)" class="pricing-btn pricing-btn-gold">Acquérir →</a>
+        <a href="/login.html" class="pricing-btn pricing-btn-outline">Acquérir →</a>
       </div>
-
     </div>
 
     <!-- TEST 24H -->
-    <div style="margin-top:40px;background:#fff;border:2px dashed var(--border);border-radius:16px;padding:28px;max-width:500px;margin:40px auto 0">
-      <div style="font-size:2rem;margin-bottom:8px">⏱</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:8px">Testez gratuitement pendant 24h</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Pas de carte bancaire requise. Accès complet à tous les modules.</div>
-      <a href="/login.html" class="pricing-btn pricing-btn-primary" style="max-width:280px;margin:auto;display:block" onclick="ouvrirTest(event)">Demander un accès test</a>
+    <div class="test-box reveal">
+      <div class="test-box-icon">⏱</div>
+      <div class="test-box-title">Testez gratuitement pendant 24h</div>
+      <div class="test-box-sub">Accès complet à tous les modules. Aucune carte bancaire requise.</div>
+      <a href="/login.html" class="btn-primary" style="margin:auto;display:inline-flex">Demander un accès test →</a>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
 <section class="cta-section">
-  <div class="section-inner">
-    <h2 class="cta-title">Prêt à moderniser votre école ?</h2>
-    <p class="cta-sub">Rejoignez les établissements qui gèrent leur école avec MadrasaTech.</p>
-    <a href="/login.html" class="btn-hero-primary" style="margin:auto;display:inline-flex">Commencer maintenant →</a>
-  </div>
+  <h2 class="cta-title reveal">Prêt à moderniser<br>votre <span class="gold">école</span> ?</h2>
+  <p class="cta-sub reveal">Rejoignez les établissements qui font confiance à MadrasaTech.</p>
+  <a href="/login.html" class="btn-primary reveal">Commencer maintenant →</a>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">🏫 MadrasaTech</div>
-  <div class="footer-sub">Système de Gestion Scolaire — Maroc · © 2025</div>
+  <div class="footer-logo">Madrasa<span>Tech</span></div>
+  <div class="footer-copy">© 2025 MadrasaTech · Système de Gestion Scolaire Maroc</div>
+  <div class="footer-links">
+    <a href="/login.html">Connexion</a>
+    <a href="#tarifs">Tarifs</a>
+    <a href="#modules">Modules</a>
+  </div>
 </footer>
 
 <script>
-function ouvrirTest(e) {
-  e.preventDefault();
-  window.location.href = '/login.html';
-}
+// Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 60));
+
+// Reveal on scroll
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// Bento mouse glow
+document.querySelectorAll('.bento').forEach(b => {
+  b.addEventListener('mousemove', e => {
+    const r = b.getBoundingClientRect();
+    b.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
+    b.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+
+// Animate bars on load
+setTimeout(() => {
+  document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.style.width);
+}, 500);
 </script>
 </body>
 </html>
