@@ -79,7 +79,7 @@ function goView(view) {
   const target = document.getElementById('view-'+view);
   if (target) target.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l => l.classList.toggle('active', l.dataset.view===view));
-  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces',utilisateurs:'Utilisateurs',devoirs:'Devoirs & Exercices','espace-eleve':'Mon Espace',messagerie:'Messagerie',calendrier:'Calendrier Scolaire',notifications:'Notifications',certificats:'Certificats & Documents',parametres:'Paramètres',superadmin:'Super Admin'};
+  const names = {dashboard:'Dashboard',eleves:'Élèves',classes:'Classes',professeurs:'Professeurs',notes:'Notes & Bulletins',absences:'Absences',emploi:'Emploi du temps',paiements:'Paiements',depenses:'Dépenses',annonces:'Annonces',utilisateurs:'Utilisateurs',facturation:'Facturation',devoirs:'Devoirs & Exercices','espace-eleve':'Mon Espace',messagerie:'Messagerie',calendrier:'Calendrier Scolaire',notifications:'Notifications',certificats:'Certificats & Documents',parametres:'Paramètres',superadmin:'Super Admin'};
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.textContent = names[view]||view;
 

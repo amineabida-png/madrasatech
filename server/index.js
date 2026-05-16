@@ -434,6 +434,26 @@ function initDB() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS factures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      numero TEXT NOT NULL,
+      eleve_id INTEGER,
+      client_nom TEXT NOT NULL,
+      client_tel TEXT,
+      client_adresse TEXT,
+      items TEXT NOT NULL,
+      sous_total REAL DEFAULT 0,
+      remise REAL DEFAULT 0,
+      total REAL DEFAULT 0,
+      statut TEXT DEFAULT 'payee',
+      mode_paiement TEXT DEFAULT 'especes',
+      notes TEXT,
+      date_facture TEXT DEFAULT CURRENT_DATE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
     CREATE TABLE IF NOT EXISTS demandes_test (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ecole TEXT NOT NULL,
@@ -1334,6 +1354,68 @@ app.post('/api/notifications/bulk', auth, (req, res) => {
   res.json({ ok: true, count });
 });
 
+
+// ════════════════════════════════════════════════════════════════
+// MODULE FACTURATION
+// ════════════════════════════════════════════════════════════════
+app.get('/api/factures', auth, (req, res) => {
+  const { search, statut } = req.query;
+  let q = 'SELECT f.*, e.nom as eleve_nom, e.prenom as eleve_prenom FROM factures f LEFT JOIN eleves e ON e.id=f.eleve_id WHERE f.user_id=?';
+  const params = [req.user.id];
+  if (statut) { q += ' AND f.statut=?'; params.push(statut); }
+  if (search) { q += ' AND (f.numero LIKE ? OR f.client_nom LIKE ?)'; params.push('%'+search+'%','%'+search+'%'); }
+  q += ' ORDER BY f.created_at DESC LIMIT 100';
+  res.json(db.prepare(q).all(...params));
+});
+
+app.get('/api/factures/:id', auth, (req, res) => {
+  const f = db.prepare('SELECT f.*, e.nom as eleve_nom, e.prenom as eleve_prenom, e.classe, e.massar FROM factures f LEFT JOIN eleves e ON e.id=f.eleve_id WHERE f.id=? AND f.user_id=?').get(req.params.id, req.user.id);
+  if (!f) return res.status(404).json({ error: 'Facture introuvable' });
+  const school = db.prepare('SELECT school FROM users WHERE id=?').get(req.user.id);
+  f.items = JSON.parse(f.items || '[]');
+  f.school = school?.school || 'MadrasaTech';
+  res.json(f);
+});
+
+app.post('/api/factures', auth, (req, res) => {
+  const { eleve_id, client_nom, client_tel, client_adresse, items, remise, mode_paiement, statut, notes, date_facture } = req.body;
+  if (!client_nom || !items || !items.length) return res.status(400).json({ error: 'Client et articles requis' });
+  
+  // Générer numéro facture
+  const count = db.prepare('SELECT COUNT(*) as n FROM factures WHERE user_id=?').get(req.user.id);
+  const year  = new Date().getFullYear();
+  const num   = `FAC-${year}-${String((count.n||0)+1).padStart(4,'0')}`;
+  
+  const sous_total = items.reduce((s,i) => s + (i.qte * i.prix), 0);
+  const total      = sous_total - (remise || 0);
+  
+  const r = db.prepare('INSERT INTO factures (user_id,numero,eleve_id,client_nom,client_tel,client_adresse,items,sous_total,remise,total,statut,mode_paiement,notes,date_facture) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+    .run(req.user.id, num, eleve_id||null, client_nom, client_tel||'', client_adresse||'', JSON.stringify(items), sous_total, remise||0, total, statut||'payee', mode_paiement||'especes', notes||'', date_facture||new Date().toISOString().split('T')[0]);
+  res.json({ ok:true, id:r.lastInsertRowid, numero:num });
+});
+
+app.put('/api/factures/:id', auth, (req, res) => {
+  const { client_nom, client_tel, client_adresse, items, remise, mode_paiement, statut, notes, date_facture } = req.body;
+  const sous_total = items.reduce((s,i) => s+(i.qte*i.prix), 0);
+  const total = sous_total - (remise||0);
+  db.prepare('UPDATE factures SET client_nom=?,client_tel=?,client_adresse=?,items=?,sous_total=?,remise=?,total=?,statut=?,mode_paiement=?,notes=?,date_facture=? WHERE id=? AND user_id=?')
+    .run(client_nom,client_tel||'',client_adresse||'',JSON.stringify(items),sous_total,remise||0,total,statut||'payee',mode_paiement||'especes',notes||'',date_facture,req.params.id,req.user.id);
+  res.json({ ok:true });
+});
+
+app.delete('/api/factures/:id', auth, (req, res) => {
+  db.prepare('DELETE FROM factures WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ ok:true });
+});
+
+app.get('/api/factures/stats/resume', auth, (req, res) => {
+  const uid = req.user.id;
+  const total     = db.prepare('SELECT COUNT(*) as n FROM factures WHERE user_id=?').get(uid).n;
+  const ca        = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=? AND statut='payee'").get(uid).n;
+  const impayees  = db.prepare("SELECT COUNT(*) as n FROM factures WHERE user_id=? AND statut='impayee'").get(uid).n;
+  const ce_mois   = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=? AND strftime('%Y-%m',date_facture)=strftime('%Y-%m','now')").get(uid).n;
+  res.json({ total, ca, impayees, ce_mois });
+});
 // ── DEMANDES TEST ─────────────────────────────────────────────
 // Public — pas besoin d'auth
 app.post('/api/demandes-test', (req, res) => {

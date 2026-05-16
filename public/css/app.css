@@ -874,3 +874,14 @@ select.filter-input { background: #fff; cursor: pointer; }
   .eleve-fiche-header { flex-direction:column;text-align:center; }
   .eleve-fiche-header button { margin-left:0 !important; }
 }
+
+/* ══ FACTURATION ════════════════════════════════════════════════ */
+.fact-item-row { display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap; }
+.fact-item-row .form-control { padding:8px 10px;font-size:13px; }
+.fact-total-box { background:#f8fafc;border-radius:12px;padding:16px;margin:16px 0;border:1px solid #e2e8f0; }
+.fact-total-row { display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:14px;color:#64748b; }
+.fact-total-final { display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:800;color:#0f172a;border-top:2px solid #e2e8f0;margin-top:4px; }
+@media(max-width:768px) {
+  .fact-item-row { gap:6px; }
+  .fact-item-row .form-control { font-size:12px;padding:6px 8px; }
+}
