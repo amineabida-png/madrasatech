@@ -726,45 +726,44 @@ app.delete('/api/depenses/:id', auth, async (req, res) => {
 
 // ── STATISTIQUES DASHBOARD ─────────────────────────────────────
 app.get('/api/stats', auth, async (req, res) => {
-  const uid = req.user.id;
-  const zero = { n: 0 };
-  
-  const runQ = async (sql, params) => {
-    try {
-      const r = await pgPool.query(sql, params);
-      return r.rows[0] || zero;
-    } catch(e) {
-      return zero;
-    }
-  };
-  const runAll = async (sql, params) => {
-    try {
-      const r = await pgPool.query(sql, params);
-      return r.rows || [];
-    } catch(e) {
-      return [];
-    }
-  };
+  try {
+    const uid = req.user.id;
+    const run = async (sql, p) => {
+      try { return (await pgPool.query(sql, p)).rows[0] || {}; }
+      catch(e) { console.error('stat:', e.message.substring(0,60)); return {}; }
+    };
+    const all = async (sql, p) => {
+      try { return (await pgPool.query(sql, p)).rows; }
+      catch(e) { return []; }
+    };
+    const N = (r, k='n') => parseInt(r[k]) || 0;
+    const F = (r, k='n') => parseFloat(r[k]) || 0;
 
-  const totalEleves   = parseInt((await runQ('SELECT COUNT(*) as n FROM eleves WHERE user_id=$1', [uid])).n) || 0;
-  const totalClasses  = parseInt((await runQ('SELECT COUNT(*) as n FROM classes WHERE user_id=$1', [uid])).n) || 0;
-  const totalProfs    = parseInt((await runQ('SELECT COUNT(*) as n FROM professeurs WHERE user_id=$1', [uid])).n) || 0;
-  const recettes      = parseFloat((await runQ('SELECT COALESCE(SUM(montant),0) as n FROM paiements WHERE user_id=$1', [uid])).n) || 0;
-  const depenses      = parseFloat((await runQ('SELECT COALESCE(SUM(montant),0) as n FROM depenses WHERE user_id=$1', [uid])).n) || 0;
-  const impayesCount  = parseInt((await runQ("SELECT COUNT(*) as n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid])).n) || 0;
-  const impayesTotal  = parseFloat((await runQ('SELECT COALESCE(SUM(COALESCE(montant_du,0)-COALESCE(montant,0)),0) as n FROM paiements WHERE user_id=$1', [uid])).n) || 0;
-  const absAujourd    = parseInt((await runQ('SELECT COUNT(*) as n FROM absences WHERE user_id=$1', [uid])).n) || 0;
-  const totalAbsences = absAujourd;
-  const parNiveau     = await runAll(`SELECT COALESCE(niveau,'autre') AS niveau, COUNT(*) AS nb FROM eleves WHERE user_id=$1 GROUP BY niveau`, [uid]);
-  const parClasse     = await runAll(`SELECT COALESCE(classe,'—') AS classe, COUNT(*) AS nb FROM eleves WHERE user_id=$1 GROUP BY classe ORDER BY nb DESC LIMIT 10`, [uid]);
+    const [e,c,p,rec,dep,imp,impT,abs,pn,pc] = await Promise.all([
+      run('SELECT COUNT(*) n FROM eleves WHERE user_id=$1',[uid]),
+      run('SELECT COUNT(*) n FROM classes WHERE user_id=$1',[uid]),
+      run('SELECT COUNT(*) n FROM professeurs WHERE user_id=$1',[uid]),
+      run('SELECT COALESCE(SUM(montant),0) n FROM paiements WHERE user_id=$1',[uid]),
+      run('SELECT COALESCE(SUM(montant),0) n FROM depenses WHERE user_id=$1',[uid]),
+      run('SELECT COUNT(*) n FROM paiements WHERE user_id=$1',[uid]),
+      run('SELECT COALESCE(SUM(montant),0) n FROM paiements WHERE user_id=$1',[uid]),
+      run('SELECT COUNT(*) n FROM absences WHERE user_id=$1',[uid]),
+      all('SELECT COALESCE(niveau,$2) niveau, COUNT(*) nb FROM eleves WHERE user_id=$1 GROUP BY niveau',[uid,'autre']),
+      all('SELECT COALESCE(classe,$2) classe, COUNT(*) nb FROM eleves WHERE user_id=$1 GROUP BY classe ORDER BY nb DESC LIMIT 10',[uid,'—']),
+    ]);
 
-  res.json({
-    totalEleves, totalClasses, totalProfs,
-    recettes, depenses, benefice: recettes - depenses,
-    impayesCount, impayesTotal,
-    absAujourd, totalAbsences,
-    parNiveau, parClasse
-  });
+    res.json({
+      totalEleves:N(e), totalClasses:N(c), totalProfs:N(p),
+      recettes:F(rec), depenses:F(dep),
+      benefice:F(rec)-F(dep),
+      impayesCount:N(imp), impayesTotal:F(impT),
+      absAujourd:N(abs), totalAbsences:N(abs),
+      parNiveau:pn, parClasse:pc
+    });
+  } catch(e) {
+    console.error('stats fatal:', e.message);
+    res.json({ totalEleves:0, totalClasses:0, totalProfs:0, recettes:0, depenses:0, benefice:0, impayesCount:0, impayesTotal:0, absAujourd:0, totalAbsences:0, parNiveau:[], parClasse:[] });
+  }
 });
 
 // ── TÉLÉCHARGEMENT FICHIERS ──────────────────────────────────
