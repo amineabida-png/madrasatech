@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0A0A0F">
 <title>MadrasaTech — Système de Gestion Scolaire Maroc</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -162,6 +164,32 @@ footer{padding:40px 5%;border-top:1px solid var(--border);display:flex;align-ite
 /* ANIMATIONS */
 .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── LANDING MOBILE ── */
+@media(max-width:768px){
+  .hero{padding:100px 5% 60px}
+  .hero-inner{grid-template-columns:1fr;gap:40px}
+  h1{font-size:38px;letter-spacing:-1px}
+  .hero-desc{font-size:15px}
+  .hero-visual{display:none}
+  .hero-stats{gap:24px}
+  .hero-stat-num{font-size:24px}
+  .modules-bento{grid-template-columns:1fr 1fr;grid-auto-rows:130px}
+  .b-2,.b-3,.b-4,.b-full{grid-column:span 1}
+  .pricing-grid{grid-template-columns:1fr;max-width:100%}
+  .test-box{padding:24px 16px}
+  .cta-title{font-size:32px}
+  nav{padding:16px 5%}
+  .nav-logo-text{font-size:16px}
+}
+@media(max-width:480px){
+  .hero-btns{flex-direction:column}
+  .btn-primary,.btn-ghost{width:100%;justify-content:center}
+  .pricing-amount{font-size:36px}
+  .hero-stats{gap:16px}
+  footer{flex-direction:column;text-align:center;gap:12px}
+  .footer-links{justify-content:center}
+}
 </style>
 </head>
 <body>
