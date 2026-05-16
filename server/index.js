@@ -279,11 +279,25 @@ async function initDB() {
 
 
 async function seedDemoData(userId) {
+  const q = async (sql, params) => {
+    try {
+      const p2 = params.map(x => x === undefined ? null : x);
+      let i = 0;
+      const pgSql = sql.replace(/\?/g, () => `$${++i}`);
+      const r = await pgPool.query(pgSql + (pgSql.trim().match(/^INSERT/i) ? ' RETURNING id' : ''), p2);
+      return { lastInsertRowid: r.rows?.[0]?.id || null };
+    } catch(e) {
+      console.error('seed error:', e.message.substring(0, 80));
+      return { lastInsertRowid: null };
+    }
+  };
+
   // Classes
   const classes = ['1ère BAC A','1ère BAC B','2ème BAC SPC','2ème BAC SVT','3ème Collège','4ème Collège','5ème Primaire','6ème Primaire'];
+  const classeIds = [];
   for (const c of classes) {
     const niveau = c.includes('BAC') ? 'lycee' : c.includes('Collège') ? 'college' : 'primaire';
-    await db.prepare('INSERT INTO classes (user_id,nom,niveau,annee_scolaire,max_eleves) VALUES (?,?,?,?,?)').run(userId,c,niveau,'2024-2025',35);
+    await q('INSERT INTO classes (user_id,nom,niveau,annee_scolaire,max_eleves) VALUES (?,?,?,?,?)', [userId,c,niveau,'2024-2025',35]);
   }
 
   // Professeurs
@@ -296,108 +310,95 @@ async function seedDemoData(userId) {
     ['Filali','Nadia','n.filali@ecole.ma','0666789012','Histoire-Géo'],
   ];
   for (const [nom,prenom,email,tel,mat] of profs) {
-    await db.prepare('INSERT INTO professeurs (user_id,nom,prenom,email,telephone,matiere,salaire) VALUES (?,?,?,?,?,?,?)').run(userId,nom,prenom,email,tel,mat,6500);
+    await q('INSERT INTO professeurs (user_id,nom,prenom,email,telephone,matiere,salaire) VALUES (?,?,?,?,?,?,?)', [userId,nom,prenom,email,tel,mat,6500]);
   }
 
   // Élèves
   const prenomsM = ['Mohamed','Ahmed','Youssef','Omar','Khalid','Ibrahim','Hassan','Rachid','Amine','Saad'];
   const prenomsF = ['Fatima','Aicha','Meryem','Soukaina','Nour','Sara','Zineb','Houda','Laila','Rim'];
   const noms = ['Alaoui','Benali','Chakir','Dahbi','El Fassi','Filali','Guerraoui','Hamid','Idrissi','Jebari'];
+  const matieres = ['Mathématiques','Français','Arabe','SVT','Physique','Histoire-Géo'];
+  const eleves = [];
 
-  let eleves = [];
   for (let i = 0; i < 80; i++) {
     const isFemale = i % 3 === 0;
     const prenom = isFemale ? prenomsF[i % 10] : prenomsM[i % 10];
     const nom = noms[i % 10];
     const classe = classes[i % classes.length];
-    const res = await db.prepare('INSERT INTO eleves (user_id,nom,prenom,classe,niveau,genre,telephone,massar,date_inscription) VALUES (?,?,?,?,?,?,?,?,?)').run(
-      userId, nom, prenom, classe, 
-      classe.includes('BAC')?'lycee':classe.includes('Collège')?'college':'primaire',
-      isFemale?'F':'M',
-      `066${String(i).padStart(7,'0')}`,
-      `G${String(140000000+i)}`,
-      '2024-09-01'
-    );
-    eleves.push(res.lastInsertRowid);
+    const r = await q('INSERT INTO eleves (user_id,nom,prenom,classe,niveau,genre,telephone,massar,date_inscription) VALUES (?,?,?,?,?,?,?,?,?)',
+      [userId, nom, prenom, classe,
+       classe.includes('BAC')?'lycee':classe.includes('Collège')?'college':'primaire',
+       isFemale?'F':'M', `066${String(i).padStart(7,'0')}`, `G${140000000+i}`, '2024-09-01']);
+    if (r.lastInsertRowid) eleves.push(r.lastInsertRowid);
   }
 
   // Notes
-  const matieres = ['Mathématiques','Français','Arabe','SVT','Physique','Histoire-Géo'];
-  eleves.slice(0,30).forEach(eleveId => {
-    matieres.forEach(mat => {
-      [1,2,3].forEach(trim => {
+  for (const eleveId of eleves.slice(0,30)) {
+    for (const mat of matieres) {
+      for (const trim of [1,2,3]) {
         const note = Math.round((Math.random()*10 + 8) * 10) / 10;
-        db.prepare('INSERT INTO notes (user_id,eleve_id,matiere,note,coefficient,trimestre,annee_scolaire) VALUES (?,?,?,?,?,?,?)').run(userId,eleveId,mat,note,2,trim,'2024-2025');
-      });
-    });
-  });
+        await q('INSERT INTO notes (user_id,eleve_id,matiere,note,coefficient,trimestre,annee_scolaire) VALUES (?,?,?,?,?,?,?)',
+          [userId,eleveId,mat,note,2,trim,'2024-2025']);
+      }
+    }
+  }
 
   // Paiements
   const mois = ['Septembre','Octobre','Novembre','Décembre','Janvier','Février','Mars','Avril'];
-  eleves.slice(0,20).forEach(eleveId => {
-    mois.forEach((m, idx) => {
+  for (const eleveId of eleves.slice(0,20)) {
+    for (let idx = 0; idx < mois.length; idx++) {
+      const m = mois[idx];
       const statut = idx < 5 ? 'paye' : idx < 6 ? 'partiel' : 'impaye';
-      db.prepare('INSERT INTO paiements (user_id,eleve_id,mois,annee,montant,montant_du,statut,date_paiement,mode_paiement) VALUES (?,?,?,?,?,?,?,?,?)').run(
-        userId,eleveId,m,2024,
-        statut==='paye'?800:statut==='partiel'?400:0,
-        800,statut,
-        statut!=='impaye'?`2024-${String(idx+9).padStart(2,'0')}-05`:null,
-        'especes'
-      );
-    });
-  });
+      await q('INSERT INTO paiements (user_id,eleve_id,mois,annee,montant,montant_du,statut,date_paiement,mode_paiement) VALUES (?,?,?,?,?,?,?,?,?)',
+        [userId,eleveId,m,2024,statut==='paye'?800:statut==='partiel'?400:0,800,statut,
+         statut!=='impaye'?`2024-${String(idx+9).padStart(2,'0')}-05`:null,'especes']);
+    }
+  }
 
   // Absences
-  eleves.slice(0,15).forEach(eleveId => {
-    for(let d=1;d<=5;d++){
-      db.prepare('INSERT INTO absences (user_id,eleve_id,date_absence,motif,justifiee,matiere) VALUES (?,?,?,?,?,?)').run(
-        userId,eleveId,`2024-10-${String(d*3).padStart(2,'0')}`,
-        d%2===0?'Maladie':'Sans motif',d%2,matieres[d%6]
-      );
+  for (const eleveId of eleves.slice(0,15)) {
+    for (let d = 1; d <= 5; d++) {
+      await q('INSERT INTO absences (user_id,eleve_id,date_absence,motif,justifiee,matiere) VALUES (?,?,?,?,?,?)',
+        [userId,eleveId,`2024-10-${String(d*3).padStart(2,'0')}`,d%2===0?'Maladie':'Sans motif',d%2,matieres[d%6]]);
     }
-  });
+  }
 
   // Emploi du temps
-  const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
   const horaires = [['08:00','10:00'],['10:00','12:00'],['14:00','16:00'],['16:00','18:00']];
-  ['1ère BAC A','2ème BAC SPC'].forEach(cls => {
-    jours.forEach(jour => {
-      horaires.forEach(([deb,fin], idx) => {
-        db.prepare('INSERT INTO emploi_temps (user_id,classe,jour,heure_debut,heure_fin,matiere,professeur,salle) VALUES (?,?,?,?,?,?,?,?)').run(
-          userId,cls,jour,deb,fin,matieres[idx%6],'Prof '+matieres[idx%6],'Salle '+(idx+1)
-        );
-      });
-    });
-  });
+  for (const cls of ['1ère BAC A','2ème BAC SPC']) {
+    for (const jour of jours) {
+      for (let idx = 0; idx < horaires.length; idx++) {
+        const [deb,fin] = horaires[idx];
+        await q('INSERT INTO emploi_temps (user_id,classe,jour,heure_debut,heure_fin,matiere,professeur,salle) VALUES (?,?,?,?,?,?,?,?)',
+          [userId,cls,jour,deb,fin,matieres[idx%6],'Prof '+matieres[idx%6],'Salle '+(idx+1)]);
+      }
+    }
+  }
 
   // Annonces
-  [
-    ['Réunion Parents','Réunion parents d\'élèves le 15 novembre à 15h00 dans la salle de conférence.','parents','haute'],
+  const annonces = [
+    ['Réunion Parents',"Réunion parents d'élèves le 15 novembre à 15h00.",'parents','haute'],
     ['Examens Trimestriels','Les examens du 1er trimestre auront lieu du 20 au 25 novembre.','tous','haute'],
     ['Journée Sportive','La journée sportive annuelle est programmée pour le 10 décembre.','eleves','normale'],
-    ['Conseil Pédagogique','Le prochain conseil pédagogique se tiendra le 5 décembre.','professeurs','normale'],
-  ].forEach(([titre,contenu,cible,priorite]) => {
-    db.prepare('INSERT INTO annonces (user_id,titre,contenu,cible,priorite) VALUES (?,?,?,?,?)').run(userId,titre,contenu,cible,priorite);
-  });
+  ];
+  for (const [titre,contenu,cible,priorite] of annonces) {
+    await q('INSERT INTO annonces (user_id,titre,contenu,cible,priorite) VALUES (?,?,?,?,?)', [userId,titre,contenu,cible,priorite]);
+  }
 
   // Dépenses
-  [
-    ['Fournitures de bureau',1200,'fournitures','Papeleria'],
-    ['Facture électricité',3500,'charges','ONE'],
-    ['Entretien bâtiment',8000,'travaux','Entreprise Alami'],
-    ['Livres pédagogiques',4500,'pedagogique','Librairie Al Manahel'],
-    ['Salaires octobre',85000,'salaires','Masse salariale'],
-  ].forEach(([lib,mont,cat,fourn]) => {
-    db.prepare('INSERT INTO depenses (user_id,libelle,montant,categorie,fournisseur) VALUES (?,?,?,?,?)').run(userId,lib,mont,cat,fourn);
-  });
+  const depenses = [
+    ['Fournitures scolaires',2500,'fournitures','2024-09-15'],
+    ['Maintenance bâtiment',8000,'maintenance','2024-10-01'],
+    ['Matériel informatique',15000,'materiel','2024-10-20'],
+  ];
+  for (const [libelle,montant,categorie,date_depense] of depenses) {
+    await q('INSERT INTO depenses (user_id,libelle,montant,categorie,date_depense) VALUES (?,?,?,?,?)', [userId,libelle,montant,categorie,date_depense]);
+  }
+
+  console.log('✅ Données demo insérées:', eleves.length, 'élèves');
 }
 
-// ── Middleware ─────────────────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── Auth Middleware ────────────────────────────────────────────
 function auth(req, res, next) {
