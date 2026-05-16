@@ -10,21 +10,7 @@ require('dotenv').config();
 
 const app = express();
 
-// ── Capture toutes les erreurs async automatiquement ──────────
-const asyncWrap = fn => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(e => {
-    console.error('ROUTE ERROR:', req.method, req.path, '-', e.message);
-    if (!res.headersSent) res.status(500).json({ error: 'Erreur serveur: ' + e.message });
-  });
-};
-// Patch app.get/post/put/delete to auto-wrap async handlers
-['get','post','put','delete'].forEach(method => {
-  const orig = app[method].bind(app);
-  app[method] = (...args) => {
-    const handlers = args.map(h => typeof h === 'function' ? asyncWrap(h) : h);
-    return orig(...handlers);
-  };
-});
+// Error handling via try/catch dans chaque route
 
 // ── Upload fichiers (multer mémoire → base64 en DB) ───────────
 const multer = require('multer');
@@ -60,7 +46,7 @@ pgPool.on('error', e => console.error('PG error:', e.message));
 
 let db;
 
-// ── Adaptateur PostgreSQL (interface identique à better-sqlite3) ──
+// ── Adaptateur PostgreSQL ─────────────────────────────────────
 function createPgDB(pool) {
   const pgify = (sql) => {
     let i = 0;
@@ -73,31 +59,44 @@ function createPgDB(pool) {
   return {
     pragma: () => {},
     exec: (sql) => {
-      sql.split(';').map(s=>s.trim()).filter(Boolean).forEach(s => {
-        pool.query(s).catch(e => {
-          if (!e.message.includes('already exists') && !e.message.includes('duplicate'))
-            console.error('exec:', e.message.substring(0,80));
-        });
-      });
+      // Fire and forget - handled by initDB directly
     },
     prepare: (sql) => ({
-      run: async (...a) => {
+      run: async (...args) => {
         let q = pgify(sql);
         if (/^\s*INSERT/i.test(q) && !q.includes('RETURNING')) q += ' RETURNING id';
-        const r = await pool.query(q, clean(a)).catch(e => { throw new Error(e.message); });
-        return { lastInsertRowid: r.rows?.[0]?.id || null, changes: r.rowCount };
+        try {
+          const r = await pool.query(q, clean(args));
+          return { lastInsertRowid: r.rows?.[0]?.id || null, changes: r.rowCount };
+        } catch(e) {
+          console.error('DB run error:', e.message.substring(0,100), '| SQL:', q.substring(0,80));
+          throw e;
+        }
       },
-      get: async (...a) => {
-        const r = await pool.query(pgify(sql), clean(a)).catch(e => { throw new Error(e.message); });
-        return r.rows[0];
+      get: async (...args) => {
+        const q = pgify(sql);
+        try {
+          const r = await pool.query(q, clean(args));
+          return r.rows[0];
+        } catch(e) {
+          console.error('DB get error:', e.message.substring(0,100), '| SQL:', q.substring(0,80));
+          throw e;
+        }
       },
-      all: async (...a) => {
-        const r = await pool.query(pgify(sql), clean(a)).catch(e => { throw new Error(e.message); });
-        return r.rows;
+      all: async (...args) => {
+        const q = pgify(sql);
+        try {
+          const r = await pool.query(q, clean(args));
+          return r.rows;
+        } catch(e) {
+          console.error('DB all error:', e.message.substring(0,100), '| SQL:', q.substring(0,80));
+          throw e;
+        }
       }
     })
   };
 }
+
 
 // ── Init DB et démarrage ─────────────────────────────────────
 db = createPgDB(pgPool);
@@ -722,6 +721,21 @@ app.put('/api/depenses/:id', auth, async (req, res) => {
 app.delete('/api/depenses/:id', auth, async (req, res) => {
   await db.prepare('DELETE FROM depenses WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ ok: true });
+});
+
+// ── DIAGNOSTIC ───────────────────────────────────────────────
+app.get('/api/debug', auth, async (req, res) => {
+  const results = {};
+  try {
+    results.user_id = req.user.id;
+    results.pg_test = (await pgPool.query('SELECT 1 as ok')).rows[0];
+    results.tables = (await pgPool.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).rows.map(r=>r.tablename);
+    results.eleves_count = (await pgPool.query('SELECT COUNT(*) n FROM eleves WHERE user_id=$1', [req.user.id])).rows[0];
+    results.status = 'OK';
+  } catch(e) {
+    results.error = e.message;
+  }
+  res.json(results);
 });
 
 // ── STATISTIQUES DASHBOARD ─────────────────────────────────────
