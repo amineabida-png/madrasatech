@@ -9,6 +9,23 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
+
+// ── Upload fichiers (multer mémoire → base64 en DB) ───────────
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg','image/png','image/gif','image/webp',
+      'application/pdf','application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Type de fichier non autorisé'));
+  }
+});
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'madrasatech-secret-2024-xK9mP2qR';
 
@@ -874,6 +891,25 @@ app.get('/api/stats', auth, async (req, res) => {
   }
 });
 
+// ── TÉLÉCHARGEMENT FICHIERS ──────────────────────────────────
+app.get('/api/devoirs/:id/fichier', auth, async (req, res) => {
+  const d = await db.prepare('SELECT fichier_nom,fichier_data,fichier_type FROM devoirs WHERE id=? AND owner_id=?').get(req.params.id, req.user.id);
+  if (!d || !d.fichier_data) return res.status(404).json({ error: 'Aucun fichier' });
+  const buf = Buffer.from(d.fichier_data, 'base64');
+  res.set('Content-Type', d.fichier_type || 'application/octet-stream');
+  res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(d.fichier_nom)}"`);
+  res.send(buf);
+});
+
+app.get('/api/rendus/:id/fichier', auth, async (req, res) => {
+  const r = await db.prepare('SELECT fichier_nom,fichier_data,fichier_type FROM rendus_devoirs WHERE id=?').get(req.params.id);
+  if (!r || !r.fichier_data) return res.status(404).json({ error: 'Aucun fichier' });
+  const buf = Buffer.from(r.fichier_data, 'base64');
+  res.set('Content-Type', r.fichier_type || 'application/octet-stream');
+  res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(r.fichier_nom)}"`);
+  res.send(buf);
+});
+
 // ── CATCHALL → SPA ─────────────────────────────────────────────
 
 // ── SUPER ADMIN ROUTES ────────────────────────────────────────
@@ -1025,11 +1061,14 @@ app.get('/api/devoirs', auth, async (req, res) => {
   await res.json(await db.prepare(q).all(...params));
 });
 
-app.post('/api/devoirs', auth, async (req, res) => {
+app.post('/api/devoirs', auth, upload.single('fichier'), async (req, res) => {
   const { titre, description, matiere, classe, date_limite, type } = req.body;
   if (!titre||!matiere) return res.status(400).json({ error: 'Titre et matière requis' });
-  const r = await db.prepare(`INSERT INTO devoirs (owner_id,titre,description,matiere,classe,date_limite,type)
-    VALUES (?,?,?,?,?,?,?)`).run(req.user.id,titre,description||'',matiere,classe||'',date_limite||'',type||'devoir');
+  const fichierNom  = req.file ? req.file.originalname : null;
+  const fichierData = req.file ? req.file.buffer.toString('base64') : null;
+  const fichierType = req.file ? req.file.mimetype : null;
+  const r = await db.prepare(`INSERT INTO devoirs (owner_id,titre,description,matiere,classe,date_limite,type,fichier_nom,fichier_data,fichier_type) VALUES (?,?,?,?,?,?,?,?,?,?)`)
+    .run(req.user.id, titre, description||'', matiere, classe||'', date_limite||'', type||'devoir', fichierNom, fichierData, fichierType);
   res.json({ ok:true, id:r.lastInsertRowid });
 });
 
