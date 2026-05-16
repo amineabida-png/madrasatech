@@ -10,6 +10,22 @@ require('dotenv').config();
 
 const app = express();
 
+// ── Capture toutes les erreurs async automatiquement ──────────
+const asyncWrap = fn => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(e => {
+    console.error('ROUTE ERROR:', req.method, req.path, '-', e.message);
+    if (!res.headersSent) res.status(500).json({ error: 'Erreur serveur: ' + e.message });
+  });
+};
+// Patch app.get/post/put/delete to auto-wrap async handlers
+['get','post','put','delete'].forEach(method => {
+  const orig = app[method].bind(app);
+  app[method] = (...args) => {
+    const handlers = args.map(h => typeof h === 'function' ? asyncWrap(h) : h);
+    return orig(...handlers);
+  };
+});
+
 // ── Upload fichiers (multer mémoire → base64 en DB) ───────────
 const multer = require('multer');
 const upload = multer({
