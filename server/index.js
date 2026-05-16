@@ -694,15 +694,21 @@ app.get('/api/eleves', auth, (req, res) => {
   res.json(db.prepare(q).all(...params));
 });
 
-app.post('/api/eleves', auth, (req, res) => {
+app.post('/api/eleves', auth, upload.single('photo'), (req, res) => {
   const { nom, prenom, date_naissance, cin_parent, telephone, email, adresse, classe, niveau, genre, massar } = req.body;
-  const r = db.prepare('INSERT INTO eleves (user_id,nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre,massar) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(req.user.id,nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre||'M',massar);
+  const photo = req.file ? 'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64') : (req.body.photo || null);
+  const r = db.prepare('INSERT INTO eleves (user_id,nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre,massar,photo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)').run(req.user.id,nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre||'M',massar,photo);
   res.json({ id: r.lastInsertRowid });
 });
 
-app.put('/api/eleves/:id', auth, (req, res) => {
+app.put('/api/eleves/:id', auth, upload.single('photo'), (req, res) => {
   const { nom, prenom, date_naissance, cin_parent, telephone, email, adresse, classe, niveau, genre, statut, massar } = req.body;
-  db.prepare('UPDATE eleves SET nom=?,prenom=?,date_naissance=?,cin_parent=?,telephone=?,email=?,adresse=?,classe=?,niveau=?,genre=?,statut=?,massar=? WHERE id=? AND user_id=?').run(nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre,statut,massar,req.params.id,req.user.id);
+  const photo = req.file ? 'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64') : undefined;
+  if (photo !== undefined) {
+    db.prepare('UPDATE eleves SET nom=?,prenom=?,date_naissance=?,cin_parent=?,telephone=?,email=?,adresse=?,classe=?,niveau=?,genre=?,statut=?,massar=?,photo=? WHERE id=? AND user_id=?').run(nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre,statut,massar,photo,req.params.id,req.user.id);
+  } else {
+    db.prepare('UPDATE eleves SET nom=?,prenom=?,date_naissance=?,cin_parent=?,telephone=?,email=?,adresse=?,classe=?,niveau=?,genre=?,statut=?,massar=? WHERE id=? AND user_id=?').run(nom,prenom,date_naissance,cin_parent,telephone,email,adresse,classe,niveau,genre,statut,massar,req.params.id,req.user.id);
+  }
   res.json({ ok: true });
 });
 

@@ -54,7 +54,9 @@ function renderEleves(classesList) {
           ${data.length ? data.map(e => `
             <tr>
               <td style="display:flex;align-items:center;gap:10px">
-                <div class="avatar ${avColor(e.id)}">${initials(e.nom,e.prenom)}</div>
+                ${e.photo
+                  ? `<img src="${e.photo}" alt="${e.prenom}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0">`
+                  : `<div class="avatar ${avColor(e.id)}">${initials(e.nom,e.prenom)}</div>`}
                 <div><strong>${e.prenom} ${e.nom}</strong><br><small style="color:var(--muted)">${e.genre==='F'?'♀':'♂'} · ${e.niveau||'—'}</small></div>
               </td>
               <td>${e.classe||'—'}</td>
@@ -84,6 +86,28 @@ async function modalEleve(id=null) {
   const classOpts = (classes||[]).map(c=>`<option value="${c.nom}" ${e.classe===c.nom?'selected':''}>${c.nom}</option>`).join('');
 
   openModal((id?'✏️ Modifier':'+ Ajouter') + ' Élève', `
+
+  <!-- PHOTO UPLOAD -->
+  <div class="eleve-photo-section">
+    <div class="eleve-photo-preview" id="ePhotoPreview" onclick="document.getElementById('ePhotoInput').click()">
+      ${e.photo
+        ? `<img src="${e.photo}" id="ePhotoImg" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+        : `<div class="eleve-photo-placeholder" id="ePhotoPlaceholder">
+            <span style="font-size:2.5rem">${e.prenom ? initials(e.nom||'', e.prenom) : '📷'}</span>
+            <span style="font-size:11px;color:#94a3b8;margin-top:4px">Ajouter photo</span>
+           </div>`}
+    </div>
+    <input type="file" id="ePhotoInput" accept="image/*" capture="environment" style="display:none" onchange="onElevePhoto(this)">
+    <div class="eleve-photo-info">
+      <div style="font-size:13px;font-weight:600;color:#374151">Photo de l'élève</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px">JPG, PNG • Max 5 MB</div>
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px;padding:6px 12px" onclick="document.getElementById('ePhotoInput').click()">
+        📷 ${e.photo ? 'Changer la photo' : 'Choisir une photo'}
+      </button>
+      ${e.photo ? `<button type="button" class="btn btn-sm" style="margin-top:4px;padding:6px 12px;color:#ef4444;background:#fef2f2;border:1px solid #fecaca" onclick="supprimerPhotoEleve()">🗑 Supprimer</button>` : ''}
+    </div>
+  </div>
+
   <div class="form-grid">
     <div class="form-group"><label class="form-label">Prénom *</label><input class="form-control" id="ePrenom" value="${e.prenom||''}" placeholder="Prénom"></div>
     <div class="form-group"><label class="form-label">Nom *</label><input class="form-control" id="eNom" value="${e.nom||''}" placeholder="Nom"></div>
@@ -108,27 +132,87 @@ async function modalEleve(id=null) {
 }
 
 async function saveEleve(id) {
-  const data = {
-    prenom: document.getElementById('ePrenom').value.trim(),
-    nom: document.getElementById('eNom').value.trim(),
-    date_naissance: document.getElementById('eDob').value,
-    genre: document.getElementById('eGenre').value,
-    classe: document.getElementById('eClasse').value,
-    niveau: document.getElementById('eNiveau').value,
-    massar: document.getElementById('eMassar').value.trim(),
-    telephone: document.getElementById('eTel').value.trim(),
-    cin_parent: document.getElementById('eCin').value.trim(),
-    email: document.getElementById('eEmail').value.trim(),
-    adresse: document.getElementById('eAddr').value.trim(),
+  const prenom = document.getElementById('ePrenom').value.trim();
+  const nom    = document.getElementById('eNom').value.trim();
+  if (!prenom || !nom) { toast('Prénom et nom requis','err'); return; }
+
+  const photoInput = document.getElementById('ePhotoInput');
+  const hasFile    = photoInput?.files?.[0];
+  const photoDeleted = window._elevePhotoDeleted;
+
+  // Use FormData if there's a photo file
+  if (hasFile) {
+    const fd = new FormData();
+    fd.append('prenom', prenom);
+    fd.append('nom', nom);
+    fd.append('date_naissance', document.getElementById('eDob').value);
+    fd.append('genre', document.getElementById('eGenre').value);
+    fd.append('classe', document.getElementById('eClasse').value);
+    fd.append('niveau', document.getElementById('eNiveau').value);
+    fd.append('massar', document.getElementById('eMassar').value.trim());
+    fd.append('telephone', document.getElementById('eTel').value.trim());
+    fd.append('cin_parent', document.getElementById('eCin').value.trim());
+    fd.append('email', document.getElementById('eEmail').value.trim());
+    fd.append('adresse', document.getElementById('eAddr').value.trim());
+    if (id) fd.append('statut', document.getElementById('eStatut')?.value || 'actif');
+    fd.append('photo', photoInput.files[0]);
+    try {
+      const token = localStorage.getItem('mt_token');
+      const url = id ? `/api/eleves/${id}` : '/api/eleves';
+      const r = await fetch(url, { method: id?'PUT':'POST', headers:{'Authorization':'Bearer '+token}, body: fd });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Erreur');
+      toast(id?'Élève modifié':'Élève ajouté','ok');
+      closeModal(); loadEleves();
+    } catch(e) { toast(e.message,'err'); }
+  } else {
+    // JSON without file
+    const data = {
+      prenom, nom,
+      date_naissance: document.getElementById('eDob').value,
+      genre: document.getElementById('eGenre').value,
+      classe: document.getElementById('eClasse').value,
+      niveau: document.getElementById('eNiveau').value,
+      massar: document.getElementById('eMassar').value.trim(),
+      telephone: document.getElementById('eTel').value.trim(),
+      cin_parent: document.getElementById('eCin').value.trim(),
+      email: document.getElementById('eEmail').value.trim(),
+      adresse: document.getElementById('eAddr').value.trim(),
+    };
+    if (id) data.statut = document.getElementById('eStatut')?.value || 'actif';
+    if (photoDeleted) data.photo = null;
+    try {
+      if (id) await api.updateEleve(id, data);
+      else    await api.createEleve(data);
+      toast(id?'Élève modifié':'Élève ajouté','ok');
+      closeModal(); loadEleves();
+    } catch(e) { toast(e.message,'err'); }
+  }
+  window._elevePhotoDeleted = false;
+}
+
+function onElevePhoto(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('Photo trop lourde (max 5 MB)','err'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('ePhotoPreview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    // Update button text
+    const btn = preview.parentElement.querySelector('button');
+    if (btn && btn.textContent.includes('Choisir')) btn.innerHTML = '📷 Changer la photo';
   };
-  if (id) data.statut = document.getElementById('eStatut').value;
-  if (!data.prenom || !data.nom) { toast('Prénom et nom requis','err'); return; }
-  try {
-    if (id) { await api.updateEleve(id, data); toast('Élève modifié','ok'); }
-    else { await api.createEleve(data); toast('Élève ajouté','ok'); }
-    closeModal();
-    loadEleves();
-  } catch(e) { console.error('[eleves]', e); toast(e.message,'err'); }
+  reader.readAsDataURL(file);
+  window._elevePhotoDeleted = false;
+}
+
+function supprimerPhotoEleve() {
+  window._elevePhotoDeleted = true;
+  const preview = document.getElementById('ePhotoPreview');
+  if (preview) preview.innerHTML = `<div class="eleve-photo-placeholder"><span style="font-size:2.5rem">📷</span><span style="font-size:11px;color:#94a3b8;margin-top:4px">Ajouter photo</span></div>`;
+  // Hide delete button
+  document.querySelectorAll('.modal-box button').forEach(b => { if(b.textContent.includes('Supprimer')) b.style.display='none'; });
 }
 
 async function supprimerEleve(id, nom) {
@@ -156,6 +240,18 @@ async function voirEleve(id) {
     </div>
     
     <div id="tab-info">
+      <!-- Photo en haut de la fiche -->
+      <div class="eleve-fiche-header">
+        ${e.photo
+          ? `<img src="${e.photo}" class="eleve-fiche-photo">`
+          : `<div class="eleve-fiche-avatar ${avColor(e.id)}">${initials(e.nom,e.prenom)}</div>`}
+        <div>
+          <div style="font-size:20px;font-weight:800;color:#0f172a">${e.prenom} ${e.nom}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">${e.classe||'—'} · ${e.niveau||'—'} · ${e.genre==='F'?'♀ Féminin':'♂ Masculin'}</div>
+          <div style="margin-top:8px"><span class="badge ${e.statut==='actif'?'badge-green':'badge-rose'}">${e.statut}</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeModal();setTimeout(()=>modalEleve(${e.id}),100)">✏️ Modifier</button>
+      </div>
       <div class="grid-2">
         <div>
           <div class="info-row"><span class="info-label">Nom complet</span><span class="info-value">${e.prenom} ${e.nom}</span></div>

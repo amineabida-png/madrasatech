@@ -854,3 +854,23 @@ select.filter-input { background: #fff; cursor: pointer; }
   .tabs::-webkit-scrollbar { display: none; }
   .msg-sidebar::-webkit-scrollbar { display: none; }
 }
+
+/* ══ PHOTO ÉLÈVE ════════════════════════════════════════════════ */
+.eleve-photo-section { display:flex;align-items:center;gap:20px;padding:16px;background:#f8fafc;border-radius:14px;margin-bottom:20px;border:1px solid #e2e8f0; }
+.eleve-photo-preview { width:90px;height:90px;border-radius:50%;border:3px solid #e2e8f0;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f1f5f9;flex-shrink:0;transition:border-color .2s; }
+.eleve-photo-preview:hover { border-color:#6366f1; }
+.eleve-photo-placeholder { display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#94a3b8; }
+.eleve-photo-info { flex:1; }
+
+/* Fiche élève header avec photo */
+.eleve-fiche-header { display:flex;align-items:center;gap:16px;padding:16px;background:#f8fafc;border-radius:14px;margin-bottom:16px;border:1px solid #e2e8f0;flex-wrap:wrap; }
+.eleve-fiche-photo { width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #e2e8f0;flex-shrink:0; }
+.eleve-fiche-avatar { width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;flex-shrink:0; }
+
+/* Photo dans la liste */
+@media(max-width:768px) {
+  .eleve-photo-section { flex-direction:column;text-align:center; }
+  .eleve-photo-info { text-align:center; }
+  .eleve-fiche-header { flex-direction:column;text-align:center; }
+  .eleve-fiche-header button { margin-left:0 !important; }
+}
