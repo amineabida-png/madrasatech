@@ -863,7 +863,7 @@ app.get('/api/stats', auth, async (req, res) => {
     const depenses     = g(await db.prepare('SELECT COALESCE(SUM(montant),0) as n FROM depenses WHERE user_id=?').get(uid));
     const impayesCount = g(await db.prepare("SELECT COUNT(*) as n FROM paiements WHERE user_id=? AND statut='impaye'").get(uid));
     const impayesTotal = g(await db.prepare("SELECT COALESCE(SUM(montant_du-montant),0) as n FROM paiements WHERE user_id=? AND statut IN ('impaye','partiel')").get(uid));
-    const absAujourd   = g(await db.prepare('SELECT COUNT(*) as n FROM absences WHERE user_id=? AND date_absence=CURRENT_DATE::text').get(uid));
+    const absAujourd   = g(await db.prepare('SELECT COUNT(*) as n FROM absences WHERE user_id=? AND date_absence=CURRENT_DATE').get(uid));
     const totalAbsences= g(await db.prepare('SELECT COUNT(*) as n FROM absences WHERE user_id=?').get(uid));
     const parNiveau    = await db.prepare("SELECT niveau, COUNT(*) as nb FROM eleves WHERE user_id=? AND statut='actif' GROUP BY niveau").all(uid);
     const parClasse    = await db.prepare("SELECT classe, COUNT(*) as nb FROM eleves WHERE user_id=? AND statut='actif' GROUP BY classe ORDER BY nb DESC LIMIT 10").all(uid);
@@ -1167,7 +1167,7 @@ app.get('/api/calendrier', auth, async (req, res) => {
   let q = 'SELECT * FROM calendrier WHERE owner_id=?';
   const params = [req.user.id];
   if (mois && annee) {
-    q += ' AND (strftime("%Y-%m", date_debut)=? OR strftime("%Y-%m", date_fin)=?)';
+    q += ` AND (TO_CHAR(date_debut::date, 'YYYY-MM')=? OR TO_CHAR(date_fin::date, 'YYYY-MM')=?)`;
     const ym = `${annee}-${String(mois).padStart(2,'0')}`;
     params.push(ym, ym);
   }
