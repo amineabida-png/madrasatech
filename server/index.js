@@ -872,22 +872,52 @@ app.delete('/api/depenses/:id', auth, async (req, res) => {
 app.get('/api/stats', auth, async (req, res) => {
   try {
     const uid = req.user.id;
-    const g = (row, field='n') => row ? (Number(row[field]) || 0) : 0;
-    const totalEleves  = g(await db.prepare("SELECT COUNT(*) as n FROM eleves WHERE user_id=? AND statut='actif'").get(uid));
-    const totalClasses = g(await db.prepare('SELECT COUNT(*) as n FROM classes WHERE user_id=?').get(uid));
-    const totalProfs   = g(await db.prepare("SELECT COUNT(*) as n FROM professeurs WHERE user_id=? AND statut='actif'").get(uid));
-    const recettes     = g(await db.prepare("SELECT COALESCE(SUM(montant),0) as n FROM paiements WHERE user_id=? AND statut IN ('paye','partiel','payé')").get(uid));
-    const depenses     = g(await db.prepare('SELECT COALESCE(SUM(montant),0) as n FROM depenses WHERE user_id=?').get(uid));
-    const impayesCount = g(await db.prepare("SELECT COUNT(*) as n FROM paiements WHERE user_id=? AND statut='impaye'").get(uid));
-    const impayesTotal = g(await db.prepare("SELECT COALESCE(SUM(montant_du-montant),0) as n FROM paiements WHERE user_id=? AND statut IN ('impaye','partiel')").get(uid));
-    const absAujourd   = g(await db.prepare('SELECT COUNT(*) as n FROM absences WHERE user_id=? AND date_absence=CURRENT_DATE').get(uid));
-    const totalAbsences= g(await db.prepare('SELECT COUNT(*) as n FROM absences WHERE user_id=?').get(uid));
-    const parNiveau    = await db.prepare("SELECT niveau, COUNT(*) as nb FROM eleves WHERE user_id=? AND statut='actif' GROUP BY niveau").all(uid);
-    const parClasse    = await db.prepare("SELECT classe, COUNT(*) as nb FROM eleves WHERE user_id=? AND statut='actif' GROUP BY classe ORDER BY nb DESC LIMIT 10").all(uid);
-    res.json({ totalEleves, totalClasses, totalProfs, recettes, depenses, benefice: recettes-depenses, impayesCount, impayesTotal, absAujourd, totalAbsences, parNiveau, parClasse });
+    // Helper: safe number from PG row (COUNT returns bigint as string)
+    const n = (row, f='n') => row ? (parseInt(row[f]) || 0) : 0;
+    const f = (row, field='n') => row ? (parseFloat(row[field]) || 0) : 0;
+
+    // Use pgPool directly for safety
+    const q = async (sql, params=[]) => {
+      const r = await pgPool.query(sql, params);
+      return r.rows;
+    };
+    const q1 = async (sql, params=[]) => {
+      const r = await pgPool.query(sql, params);
+      return r.rows[0] || {};
+    };
+
+    const [elR, clR, prR, recR, depR, impCR, impTR, absAR, absTR, niveR, clsR] = await Promise.all([
+      q1("SELECT COUNT(*)::int AS n FROM eleves WHERE user_id=$1 AND statut='actif'", [uid]),
+      q1('SELECT COUNT(*)::int AS n FROM classes WHERE user_id=$1', [uid]),
+      q1("SELECT COUNT(*)::int AS n FROM professeurs WHERE user_id=$1 AND statut='actif'", [uid]),
+      q1("SELECT COALESCE(SUM(montant),0)::float AS n FROM paiements WHERE user_id=$1 AND statut IN ('paye','partiel','payé')", [uid]),
+      q1('SELECT COALESCE(SUM(montant),0)::float AS n FROM depenses WHERE user_id=$1', [uid]),
+      q1("SELECT COUNT(*)::int AS n FROM paiements WHERE user_id=$1 AND statut='impaye'", [uid]),
+      q1("SELECT COALESCE(SUM(montant_du-montant),0)::float AS n FROM paiements WHERE user_id=$1 AND statut IN ('impaye','partiel')", [uid]),
+      q1("SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1 AND date_absence=CURRENT_DATE::text", [uid]),
+      q1('SELECT COUNT(*)::int AS n FROM absences WHERE user_id=$1', [uid]),
+      q("SELECT niveau, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 AND statut='actif' GROUP BY niveau", [uid]),
+      q("SELECT classe, COUNT(*)::int AS nb FROM eleves WHERE user_id=$1 AND statut='actif' GROUP BY classe ORDER BY nb DESC LIMIT 10", [uid]),
+    ]);
+
+    const totalEleves   = n(elR);
+    const totalClasses  = n(clR);
+    const totalProfs    = n(prR);
+    const recettes      = f(recR);
+    const depenses      = f(depR);
+    const impayesCount  = n(impCR);
+    const impayesTotal  = f(impTR);
+    const absAujourd    = n(absAR);
+    const totalAbsences = n(absTR);
+    const parNiveau     = niveR;
+    const parClasse     = clsR;
+
+    res.json({ totalEleves, totalClasses, totalProfs, recettes, depenses,
+      benefice: recettes-depenses, impayesCount, impayesTotal,
+      absAujourd, totalAbsences, parNiveau, parClasse });
   } catch(e) {
-    console.error('stats error:', e.message);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error('stats error:', e.message, e.stack?.split('\n')[1]);
+    res.status(500).json({ error: 'Erreur serveur: ' + e.message });
   }
 });
 

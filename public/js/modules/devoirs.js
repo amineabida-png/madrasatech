@@ -6,7 +6,10 @@ async function loadDevoirs() {
   if (!v) return;
   v.innerHTML = `<div class="loading-center">⏳ Chargement...</div>`;
   try {
-    const [devoirs, classes] = await Promise.all([api.get('/devoirs'), api.getClasses()]);
+    const [devoirs, classes] = await Promise.all([
+      api.get('/devoirs'),
+      api.getClasses().catch(() => [])
+    ]);
     window._devoirsData    = devoirs;
     window._devoirsClasses = classes;
     renderDevoirs(devoirs, classes);
