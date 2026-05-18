@@ -63,15 +63,16 @@ function renderFacturation(factures, stats) {
     </div>
   </div>
 
-  <!-- Modal facture -->
-  <div class="modal-backdrop" id="fact-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center" onclick="if(event.target===this)closeFact()">
-    <div class="modal-box" id="fact-modal-box" style="max-width:700px;max-height:92vh">
-      <div class="modal-header"><h3 id="fact-modal-title">Nouvelle facture</h3><button class="modal-close" onclick="closeFact()">✕</button></div>
-      <div class="modal-body" id="fact-modal-body"></div>
-    </div>
-  </div>`;
+`;
+  if (!document.getElementById('fact-modal')) {
+    const div = document.createElement('div');
+    div.id = 'fact-modal';
+    div.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center';
+    div.onclick = function(e){ if(e.target===this) closeFact(); };
+    div.innerHTML = '<div class="modal-box" id="fact-modal-box" style="max-width:700px;max-height:92vh;overflow-y:auto"><div class="modal-header"><h3 id="fact-modal-title">Nouvelle facture</h3><button class="modal-close" onclick="closeFact()">✕</button></div><div class="modal-body" id="fact-modal-body"></div></div>';
+    document.body.appendChild(div);
+  }
 }
-
 function renderFactRows(factures) {
   if (!factures.length) return `<tr><td colspan="7"><div class="empty"><div class="empty-ico">🧾</div><div class="empty-title">Aucune facture</div><div class="empty-sub">Créez votre première facture</div></div></td></tr>`;
   const statutBadge = { payee:'badge-green', impayee:'badge-rose', annulee:'badge-gray' };
