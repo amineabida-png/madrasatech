@@ -1073,3 +1073,60 @@ select.filter-input { background: #fff; cursor: pointer; }
 .msg2-attach-nom { font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .msg2-attach-action { font-size:12px;color:#64748b;margin-top:2px; }
 .msg2-attach-dl { font-size:1.3rem;flex-shrink:0; }
+
+/* ══ MOBILE TOPBAR FIX — Safe area iOS ══════════════════════════ */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .topbar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(var(--topbar-h) + env(safe-area-inset-top));
+  }
+  .sidebar {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Fix hamburger position sur mobile installé */
+@media (max-width: 768px) {
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    padding-top: max(12px, env(safe-area-inset-top));
+    height: auto;
+    min-height: var(--topbar-h);
+    background: #fff;
+  }
+  .menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .main {
+    margin-left: 0;
+    padding-top: 0;
+  }
+  .sidebar {
+    top: 0;
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  /* Empêche le contenu de passer sous la topbar */
+  .content {
+    padding-top: 16px;
+  }
+}
+
+/* PWA standalone mode — extra padding pour status bar */
+@media (display-mode: standalone) {
+  .topbar {
+    padding-top: env(safe-area-inset-top, 20px);
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 20px));
+  }
+  .sidebar {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
