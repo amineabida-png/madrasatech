@@ -500,3 +500,4 @@ async function imprimerA4(id) {
   </body></html>`);
   win.document.close();
 }
+// Mon May 18 15:24:18 UTC 2026
