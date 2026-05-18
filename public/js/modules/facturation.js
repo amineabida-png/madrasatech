@@ -141,7 +141,7 @@ function renderFactModal(f={}) {
     <div class="form-group"><label class="form-label">Élève lié</label>
       <select class="form-control" id="f-eleve" onchange="autoFillClient(this)">
         <option value="">— Aucun élève —</option>
-        ${eleves.map(e=>`<option value="${e.id}" data-nom="${e.prenom} ${e.nom}" data-tel="${e.telephone||''}" ${f.eleve_id==e.id?'selected':''}>${e.prenom} ${e.nom} — ${e.classe||'—'}</option>`).join('')}
+        ${eleves.map(e=>'<option value="'+e.id+'" data-nom="'+e.prenom+' '+e.nom+'" data-tel="'+(e.telephone||'')+'"'+(f.eleve_id==e.id?' selected':'')+'>'+e.prenom+' '+e.nom+' — '+(e.classe||'—')+'</option>').join('')}
       </select>
     </div>
     <div class="form-group"><label class="form-label">Téléphone</label>
@@ -167,7 +167,7 @@ function renderFactModal(f={}) {
     </div>
     <div class="form-group"><label class="form-label">Mode de paiement</label>
       <select class="form-control" id="f-mode">
-        ${['especes','virement','cheque','carte'].map(m=>`<option value="${m}" ${f.mode_paiement===m?'selected':''}>${{especes:'💵 Espèces',virement:'🏦 Virement',cheque:'📝 Chèque',carte:'💳 Carte'}[m]}</option>`).join('')}
+        ${['especes','virement','cheque','carte'].map(m=>{const labels={especes:'💵 Espèces',virement:'🏦 Virement',cheque:'📝 Chèque',carte:'💳 Carte'};return '<option value="'+m+'"'+(f.mode_paiement===m?' selected':'')+'>'+labels[m]+'</option>';}).join('')}
       </select>
     </div>
     <div class="form-group"><label class="form-label">Statut</label>
