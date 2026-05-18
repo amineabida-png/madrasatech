@@ -93,6 +93,7 @@ function goView(view) {
     emploi:      () => typeof loadEmploi      === 'function' && loadEmploi(),
     paiements:   () => typeof loadPaiements   === 'function' && loadPaiements(),
     depenses:    () => typeof loadDepenses    === 'function' && loadDepenses(),
+    facturation: () => typeof loadFacturation === 'function' && loadFacturation(),
     annonces:    () => typeof AnnoncesMod !== 'undefined' ? AnnoncesMod.init() : typeof loadAnnonces === 'function' && loadAnnonces(),
     utilisateurs:  () => typeof loadUtilisateurs  === 'function' && loadUtilisateurs(),
     devoirs:       () => typeof loadDevoirs       === 'function' && loadDevoirs(),
