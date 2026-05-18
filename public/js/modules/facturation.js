@@ -133,8 +133,8 @@ async function modifierFacture(id) {
 
 function renderFactModal(f={}) {
   const eleves = window._factEleves || [];
-  document.getElementById('fact-modal-title').textContent = f.id ? '✏️ Modifier facture' : '🧾 Nouvelle facture';
-  document.getElementById('fact-modal-body').innerHTML = `
+  const titre = f.id ? '✏️ Modifier facture' : '🧾 Nouvelle facture';
+  const bodyHtml = `
   <div class="form-grid">
     <div class="form-group"><label class="form-label">Client / Nom *</label>
       <input class="form-control" id="f-client" value="${f.client_nom||''}" placeholder="Nom du client ou parent">
@@ -198,9 +198,9 @@ function renderFactModal(f={}) {
     </div>
   </div>`;
 
+  openModal(titre, bodyHtml, true);
   renderItems();
   calcTotal();
-  document.getElementById('fact-modal').style.display = 'flex';
 }
 
 function autoFillClient(sel) {
@@ -293,7 +293,7 @@ async function saveFacture(onlySave=false, printTicket=false, printA4=false) {
 }
 
 function closeFact() {
-  document.getElementById('fact-modal').style.display = 'none';
+  closeModal();
 }
 
 async function supprimerFacture(id) {
