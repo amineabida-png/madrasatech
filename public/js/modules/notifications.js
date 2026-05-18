@@ -211,7 +211,7 @@ async function envoyerNotif() {
         window.open(`sms:${tel}?body=${encodeURIComponent(objet+': '+message)}`, '_blank');
         showToast('✅ Application SMS ouverte', 'success');
       } else {
-        showToast('✅ SMS enregistré dans l'historique (sélectionnez un élève pour envoi direct)', 'success');
+        showToast('✅ SMS enregistré — sélectionnez un élève pour envoi direct', 'success');
       }
     } else if (canal === 'email') {
       const email = (window._notifsEleves||[]).find(e=>e.id==document.getElementById('notif-eleve-id')?.value)?.email;

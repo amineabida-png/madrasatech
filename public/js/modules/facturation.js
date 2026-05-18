@@ -442,16 +442,16 @@ async function imprimerA4(id) {
       <div class="partie-label">Destinataire</div>
       <div class="partie-name">${f.client_nom}</div>
       <div class="partie-detail">
-        ${f.client_tel?'📞 '+f.client_tel+'<br>':''}
-        ${f.client_adresse?'📍 '+f.client_adresse+'<br>':''}
-        ${f.eleve_nom?'🎓 Élève : '+f.eleve_prenom+' '+f.eleve_nom+(f.classe?' ('+f.classe+')'):''}
+        ${f.client_tel ? ('📞 ' + f.client_tel + '<br>') : ''}
+        ${f.client_adresse ? ('📍 ' + f.client_adresse + '<br>') : ''}
+        ${f.eleve_nom ? ('🎓 ' + f.eleve_prenom + ' ' + f.eleve_nom + (f.classe ? ' (' + f.classe + ')' : '')) : ''}
       </div>
     </div>
   </div>
 
   <!-- MODE PAIEMENT -->
   <div style="margin-bottom:16px;font-size:12px;color:#64748b">
-    Mode de paiement : <strong>${{especes:'Espèces 💵',virement:'Virement bancaire 🏦',cheque:'Chèque 📝',carte:'Carte bancaire 💳'}[f.mode_paiement]||f.mode_paiement}</strong>
+    Mode de paiement : <strong>${f.mode_paiement === 'especes' ? 'Espèces 💵' : f.mode_paiement === 'virement' ? 'Virement 🏦' : f.mode_paiement === 'cheque' ? 'Chèque 📝' : 'Carte 💳'}</strong>
   </div>
 
   <!-- TABLEAU ARTICLES -->
