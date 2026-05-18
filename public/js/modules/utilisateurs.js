@@ -186,43 +186,74 @@ function modalUser() {
     <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" class="form-control" id="u-pw" placeholder="Minimum 6 caractères"></div>
     <div class="form-group full">
       <label class="form-label">Rôle *</label>
-      <div class="usr-role-grid">
-        <label class="usr-role-opt ${adminDisabled?'usr-role-disabled':''}">
+      <div class="role-selector">
+        <label class="role-card ${adminDisabled?'role-disabled':''}">
           <input type="radio" name="u-role" value="admin_ecole" ${adminDisabled?'disabled':''}>
-          <div class="usr-role-card" style="border-color:#6366f1">
-            <div class="usr-role-icon" style="background:#eef2ff">🛡️</div>
-            <div class="usr-role-name">Administrateur</div>
-            <div class="usr-role-desc">Accès complet</div>
-            <div class="usr-role-limit ${adminDisabled?'usr-limit-warn':''}">
-              ${adminDisabled?'⚠️ Limite 10/10':'Max 10 par école'}
+          <div class="role-card-inner" style="--rc:#6366f1;--rcbg:#eef2ff">
+            <div class="role-icon">🛡️</div>
+            <div class="role-name">Administrateur</div>
+            <div class="role-perms">
+              <span class="role-perm">✅ Gestion élèves</span>
+              <span class="role-perm">✅ Classes & profs</span>
+              <span class="role-perm">✅ Notes & bulletins</span>
+              <span class="role-perm">✅ Paiements</span>
+              <span class="role-perm">✅ Annonces</span>
+              <span class="role-perm">✅ Tous les modules</span>
+            </div>
+            <div class="role-limit ${adminDisabled?'role-limit-warn':''}">
+              ${adminDisabled?'⚠️ Limite atteinte (10/10)':'🔒 Max 10 par école'}
             </div>
           </div>
         </label>
-        <label class="usr-role-opt">
+
+        <label class="role-card">
           <input type="radio" name="u-role" value="professeur" checked>
-          <div class="usr-role-card usr-role-selected" style="border-color:#0ea5e9">
-            <div class="usr-role-icon" style="background:#f0f9ff">👨‍🏫</div>
-            <div class="usr-role-name">Professeur</div>
-            <div class="usr-role-desc">Notes & absences</div>
-            <div class="usr-role-limit">∞ Illimité</div>
+          <div class="role-card-inner" style="--rc:#0ea5e9;--rcbg:#f0f9ff">
+            <div class="role-icon">👨‍🏫</div>
+            <div class="role-name">Professeur</div>
+            <div class="role-perms">
+              <span class="role-perm">✅ Saisie des notes</span>
+              <span class="role-perm">✅ Absences</span>
+              <span class="role-perm">✅ Emploi du temps</span>
+              <span class="role-perm">✅ Devoirs & exercices</span>
+              <span class="role-perm">✅ Messagerie</span>
+              <span class="role-perm">❌ Paiements & finances</span>
+            </div>
+            <div class="role-limit" style="color:#0ea5e9">∞ Illimité</div>
           </div>
         </label>
-        <label class="usr-role-opt">
+
+        <label class="role-card">
           <input type="radio" name="u-role" value="parent">
-          <div class="usr-role-card" style="border-color:#10b981">
-            <div class="usr-role-icon" style="background:#f0fdf4">👨‍👩‍👧</div>
-            <div class="usr-role-name">Parent</div>
-            <div class="usr-role-desc">Bulletins & absences</div>
-            <div class="usr-role-limit">∞ Illimité</div>
+          <div class="role-card-inner" style="--rc:#10b981;--rcbg:#f0fdf4">
+            <div class="role-icon">👨‍👩‍👧</div>
+            <div class="role-name">Parent</div>
+            <div class="role-perms">
+              <span class="role-perm">✅ Bulletins de notes</span>
+              <span class="role-perm">✅ Absences enfant</span>
+              <span class="role-perm">✅ Emploi du temps</span>
+              <span class="role-perm">✅ Messagerie</span>
+              <span class="role-perm">❌ Saisie de données</span>
+              <span class="role-perm">❌ Administration</span>
+            </div>
+            <div class="role-limit" style="color:#10b981">∞ Illimité</div>
           </div>
         </label>
-        <label class="usr-role-opt">
+
+        <label class="role-card">
           <input type="radio" name="u-role" value="eleve">
-          <div class="usr-role-card" style="border-color:#f59e0b">
-            <div class="usr-role-icon" style="background:#fffbeb">🎓</div>
-            <div class="usr-role-name">Élève</div>
-            <div class="usr-role-desc">Notes, cours, devoirs</div>
-            <div class="usr-role-limit">∞ Illimité</div>
+          <div class="role-card-inner" style="--rc:#f59e0b;--rcbg:#fffbeb">
+            <div class="role-icon">🎓</div>
+            <div class="role-name">Élève</div>
+            <div class="role-perms">
+              <span class="role-perm">✅ Ses propres notes</span>
+              <span class="role-perm">✅ Emploi du temps</span>
+              <span class="role-perm">✅ Devoirs à rendre</span>
+              <span class="role-perm">✅ Ses absences</span>
+              <span class="role-perm">❌ Données autres élèves</span>
+              <span class="role-perm">❌ Administration</span>
+            </div>
+            <div class="role-limit" style="color:#f59e0b">∞ Illimité</div>
           </div>
         </label>
       </div>
@@ -236,9 +267,11 @@ function modalUser() {
   // Role card selection
   document.querySelectorAll('input[name="u-role"]').forEach(r => {
     r.addEventListener('change', () => {
-      document.querySelectorAll('.usr-role-card').forEach(c => c.classList.remove('usr-role-selected'));
-      if (!r.disabled) r.parentElement.querySelector('.usr-role-card').classList.add('usr-role-selected');
+      document.querySelectorAll('.role-card-inner').forEach(c => c.classList.remove('role-selected'));
+      if (!r.disabled) r.parentElement.querySelector('.role-card-inner').classList.add('role-selected');
     });
+    // Init selected
+    if (r.checked && !r.disabled) r.parentElement.querySelector('.role-card-inner').classList.add('role-selected');
   });
 
   document.getElementById('usr-modal').style.display = 'flex';
