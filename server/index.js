@@ -1380,6 +1380,19 @@ app.get('/api/factures', auth, (req, res) => {
   res.json(db.prepare(q).all(...params));
 });
 
+app.get('/api/factures/stats/resume', auth, (req, res) => {
+  const uid = req.user.id;
+  try {
+    const total    = db.prepare('SELECT COUNT(*) as n FROM factures WHERE user_id=?').get(uid)?.n || 0;
+    const ca       = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=? AND statut='payee'").get(uid)?.n || 0;
+    const impayees = db.prepare("SELECT COUNT(*) as n FROM factures WHERE user_id=? AND statut='impayee'").get(uid)?.n || 0;
+    const ce_mois  = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=?").get(uid)?.n || 0;
+    res.json({ total, ca, impayees, ce_mois });
+  } catch(e) {
+    res.json({ total:0, ca:0, impayees:0, ce_mois:0 });
+  }
+});
+
 app.get('/api/factures/:id', auth, (req, res) => {
   const f = db.prepare('SELECT f.*, e.nom as eleve_nom, e.prenom as eleve_prenom, e.classe, e.massar FROM factures f LEFT JOIN eleves e ON e.id=f.eleve_id WHERE f.id=? AND f.user_id=?').get(req.params.id, req.user.id);
   if (!f) return res.status(404).json({ error: 'Facture introuvable' });
@@ -1420,14 +1433,7 @@ app.delete('/api/factures/:id', auth, (req, res) => {
   res.json({ ok:true });
 });
 
-app.get('/api/factures/stats/resume', auth, (req, res) => {
-  const uid = req.user.id;
-  const total     = db.prepare('SELECT COUNT(*) as n FROM factures WHERE user_id=?').get(uid).n;
-  const ca        = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=? AND statut='payee'").get(uid).n;
-  const impayees  = db.prepare("SELECT COUNT(*) as n FROM factures WHERE user_id=? AND statut='impayee'").get(uid).n;
-  const ce_mois   = db.prepare("SELECT COALESCE(SUM(total),0) as n FROM factures WHERE user_id=? AND strftime('%Y-%m',date_facture)=strftime('%Y-%m','now')").get(uid).n;
-  res.json({ total, ca, impayees, ce_mois });
-});
+
 // ── DEMANDES TEST ─────────────────────────────────────────────
 // Public — pas besoin d'auth
 app.post('/api/demandes-test', (req, res) => {
