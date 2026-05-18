@@ -131,7 +131,8 @@ async function modifierFacture(id) {
   renderFactModal(f);
 }
 
-function renderFactModal(f={}) {
+function renderFactModal(f) {
+  if (!f) f = {};
   const eleves = window._factEleves || [];
   const titre = f.id ? 'Modifier facture' : 'Nouvelle facture';
   const bodyHtml = `
