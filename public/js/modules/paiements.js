@@ -51,7 +51,11 @@ async function loadPaiements() {
               <td>${fmtDate(p.date_paiement)||'—'}</td>
               <td>${p.mode_paiement||'—'}</td>
               <td>
-                ${p.statut!=='paye'?`<button class="btn btn-sm btn-success" onclick="modalEncaisser(${p.id},${p.montant_du},'${p.prenom} ${p.nom}')">Encaisser</button>`:'<span style="font-size:18px">✅</span>'}
+                <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+                  ${p.statut!=='paye'?`<button class="btn btn-sm btn-success" onclick="modalEncaisser(${p.id},${p.montant_du},'${p.prenom} ${p.nom}')">💰 Encaisser</button>`:'<span style="font-size:16px">✅</span>'}
+                  <button class="btn btn-sm btn-ghost" title="Ticket caisse" onclick='imprimerPaiementTicket(${JSON.stringify(p)})'>🧾</button>
+                  <button class="btn btn-sm btn-ghost" title="Imprimer A4" onclick='imprimerPaiementA4(${JSON.stringify(p)})'>🖨️</button>
+                </div>
               </td>
             </tr>`).join('') : '<tr><td colspan="9"><div class="empty"><div class="empty-ico">💰</div><div class="empty-title">Aucun paiement</div></div></td></tr>'}
           </tbody>
@@ -180,4 +184,80 @@ async function encaisser(id) {
     toast(`Encaissement confirmé (${r.statut})`, 'ok');
     closeModal(); loadPaiements();
   } catch(e) { console.error('[paiements]', e); toast(e.message,'err'); }
+}
+
+// ── IMPRESSION PAIEMENT ──────────────────────────────────────
+function imprimerPaiementTicket(p) {
+  const school = document.querySelector('.top-school')?.textContent || 'MadrasaTech';
+  const win = window.open('','_blank','width=350,height=500');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;padding:10px;background:#fff}
+  .c{text-align:center}.b{font-weight:bold}.big{font-size:15px;font-weight:800}
+  .sep{border-top:1px dashed #000;margin:6px 0}.row{display:flex;justify-content:space-between;padding:2px 0}
+  .total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;border-top:2px solid #000;margin-top:4px;padding-top:4px}
+  @media print{@page{size:80mm auto;margin:3mm}}</style></head><body>
+  <div class="c big">🏫 ${school}</div>
+  <div class="c" style="font-size:10px;margin:3px 0">Reçu de Paiement</div>
+  <div class="sep"></div>
+  <div class="row"><span>Élève:</span><span class="b">${p.prenom} ${p.nom}</span></div>
+  <div class="row"><span>Classe:</span><span>${p.classe||'—'}</span></div>
+  <div class="row"><span>Mois:</span><span>${p.mois} ${p.annee}</span></div>
+  <div class="row"><span>Mode:</span><span>${p.mode_paiement||'Espèces'}</span></div>
+  <div class="row"><span>Date:</span><span>${new Date().toLocaleDateString('fr-MA')}</span></div>
+  <div class="sep"></div>
+  <div class="total"><span>MONTANT</span><span>${(p.montant||0).toLocaleString('fr-MA')} MAD</span></div>
+  <div class="row" style="margin-top:4px"><span>Dû:</span><span>${(p.montant_du||0).toLocaleString('fr-MA')} MAD</span></div>
+  <div class="row"><span>Statut:</span><span class="b">${p.statut==='paye'?'✅ PAYÉ':p.statut==='partiel'?'⚠️ PARTIEL':'❌ IMPAYÉ'}</span></div>
+  <div class="sep"></div>
+  <div class="c" style="font-size:11px;margin-top:6px">Merci de votre confiance !<br>★ ${school} ★</div>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),1000)}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function imprimerPaiementA4(p) {
+  const school = document.querySelector('.top-school')?.textContent || 'MadrasaTech';
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;font-size:13px}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;padding-bottom:20px;border-bottom:3px solid #1a56db}
+  .logo{font-size:28px;font-weight:900;color:#1a56db}.sub{font-size:12px;color:#94a3b8}
+  .recu-title{font-size:20px;font-weight:800;color:#0f172a}.recu-num{font-size:12px;color:#64748b}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px}
+  .info-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px}
+  .info-val{font-size:14px;font-weight:600;color:#0f172a}
+  .montant-box{background:#0f172a;color:#fff;border-radius:12px;padding:24px;text-align:center;margin:24px 0}
+  .montant-val{font-size:36px;font-weight:900;color:#fff}
+  .montant-lbl{font-size:12px;color:rgba(255,255,255,.6);margin-top:4px}
+  .statut{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:700;font-size:13px}
+  .statut-paye{background:#dcfce7;color:#059669}.statut-partiel{background:#fef9c3;color:#d97706}.statut-impaye{background:#fee2e2;color:#dc2626}
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8}
+  .sign{text-align:center;width:160px;border-top:1px solid #e2e8f0;padding-top:8px;margin-top:40px;font-size:11px;color:#64748b}
+  @media print{body{padding:20px}@page{size:A4;margin:15mm}}</style></head><body>
+  <div class="header">
+    <div><div class="logo">🏫 ${school}</div><div class="sub">Système de Gestion Scolaire</div></div>
+    <div style="text-align:right"><div class="recu-title">REÇU DE PAIEMENT</div>
+    <div class="recu-num">Date: ${new Date().toLocaleDateString('fr-MA',{day:'2-digit',month:'long',year:'numeric'})}</div>
+    <div style="margin-top:8px"><span class="statut statut-${p.statut||'paye'}">${p.statut==='paye'?'✅ PAYÉ':p.statut==='partiel'?'⚠️ PARTIEL':'❌ IMPAYÉ'}</span></div>
+    </div>
+  </div>
+  <div class="info-grid">
+    <div><div class="info-label">Élève</div><div class="info-val">${p.prenom} ${p.nom}</div></div>
+    <div><div class="info-label">Classe</div><div class="info-val">${p.classe||'—'}</div></div>
+    <div><div class="info-label">Période</div><div class="info-val">${p.mois} ${p.annee}</div></div>
+    <div><div class="info-label">Mode de paiement</div><div class="info-val">${p.mode_paiement||'Espèces'}</div></div>
+    <div><div class="info-label">Montant dû</div><div class="info-val">${(p.montant_du||0).toLocaleString('fr-MA')} MAD</div></div>
+    <div><div class="info-label">N° Massar</div><div class="info-val">${p.massar||'—'}</div></div>
+  </div>
+  <div class="montant-box">
+    <div class="montant-val">${(p.montant||0).toLocaleString('fr-MA')} MAD</div>
+    <div class="montant-lbl">Montant encaissé</div>
+  </div>
+  <div class="footer">
+    <div><div>Merci de votre confiance</div><div>${school} — Système de Gestion Scolaire</div></div>
+    <div class="sign">Signature & Cachet</div>
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  win.document.close();
 }

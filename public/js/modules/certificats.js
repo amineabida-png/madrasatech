@@ -183,20 +183,26 @@ function buildDocHTML(type, data) {
   }
 
   if (type === 'carte') return `
-  <div style="width:320px;margin:auto;border:2px solid #1a56db;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.15)">
+  <div style="width:340px;margin:auto;border:2px solid #1a56db;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.18)">
     <div style="background:linear-gradient(135deg,#1a56db,#7c3aed);padding:16px;text-align:center;color:#fff">
-      <div style="font-size:1.5rem">🏫</div>
-      <div style="font-weight:700">${schoolName}</div>
-      <div style="font-size:11px;opacity:.8">CARTE D'ÉLÈVE ${annee-1}/${annee}</div>
+      <div style="font-size:1.2rem;font-weight:700">${schoolName}</div>
+      <div style="font-size:10px;opacity:.8;margin-top:2px">CARTE D'ÉLÈVE ${annee-1}/${annee}</div>
     </div>
-    <div style="padding:16px;background:#fff">
-      <div style="font-size:48px;text-align:center;margin-bottom:12px">🎓</div>
-      <div style="text-align:center;font-size:18px;font-weight:800;color:#0f172a">${eleve.prenom} ${eleve.nom}</div>
-      <div style="text-align:center;color:#64748b;margin-bottom:12px">${eleve.classe||'—'}</div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:10px">
-        <span>N° ${eleve.massar||'—'}</span>
-        <span>${today}</span>
+    <div style="padding:20px;background:#fff;display:flex;align-items:center;gap:16px">
+      <div style="flex-shrink:0">
+        ${eleve.photo
+          ? `<img src="${eleve.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #1a56db">`
+          : `<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1a56db,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff">${eleve.prenom?.charAt(0)||'?'}</div>`}
       </div>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:#0f172a">${eleve.prenom} ${eleve.nom}</div>
+        <div style="color:#64748b;font-size:12px;margin-top:2px">${eleve.classe||'—'}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">N° ${eleve.massar||'—'}</div>
+      </div>
+    </div>
+    <div style="background:#f8fafc;padding:8px 20px;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;border-top:1px solid #f1f5f9">
+      <span>Délivré le ${today}</span>
+      <span>${annee-1}/${annee}</span>
     </div>
   </div>`;
 

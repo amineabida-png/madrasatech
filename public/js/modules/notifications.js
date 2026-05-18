@@ -135,11 +135,14 @@ function ouvrirEnvoi(templateId=null) {
     </div>
   </div>
 
-  <div class="notif-info-box">
-    <div style="font-size:1.2rem">ℹ️</div>
+  <div class="notif-info-box" style="background:#f0fdf4;border-color:#86efac">
+    <div style="font-size:1.2rem">✅</div>
     <div style="font-size:12px;line-height:1.6">
-      <strong>Simulation activée</strong> — Les notifications sont enregistrées dans l'historique.<br>
-      Pour un vrai envoi SMS, connectez un service comme <strong>SMS.ma</strong>, <strong>Twilio</strong> ou <strong>InfoBip</strong> via API.
+      <strong>Envoi réel gratuit :</strong><br>
+      📱 <strong>SMS</strong> → ouvre votre application SMS (sélectionnez l'élève)<br>
+      💬 <strong>WhatsApp</strong> → ouvre WhatsApp Web avec le message prêt<br>
+      📧 <strong>Email</strong> → ouvre votre client email (Gmail, Outlook...)<br>
+      Tous les envois sont aussi enregistrés dans l'historique.
     </div>
   </div>
 
@@ -190,7 +193,37 @@ async function envoyerNotif() {
 
   try {
     await api.post('/notifications/envoyer', { destinataire, canal, objet, message, statut:'envoye' });
-    showToast(`✅ Notification ${canal.toUpperCase()} envoyée à "${destinataire}" !`, 'success');
+
+    // Solution GRATUITE: ouvrir l'app directement
+    if (canal === 'whatsapp') {
+      const tel = document.getElementById('notif-eleve-id') 
+        ? (window._notifsEleves||[]).find(e=>e.id==document.getElementById('notif-eleve-id')?.value)?.telephone
+        : null;
+      const txt = encodeURIComponent(objet + '\n\n' + message);
+      const url = tel 
+        ? `https://wa.me/212${tel.replace(/^0/,'').replace(/\s/g,'')}?text=${txt}`
+        : `https://web.whatsapp.com/send?text=${txt}`;
+      window.open(url, '_blank');
+      showToast('✅ WhatsApp ouvert — envoyez le message depuis votre téléphone', 'success');
+    } else if (canal === 'sms') {
+      const tel = (window._notifsEleves||[]).find(e=>e.id==document.getElementById('notif-eleve-id')?.value)?.telephone;
+      if (tel) {
+        window.open(`sms:${tel}?body=${encodeURIComponent(objet+': '+message)}`, '_blank');
+        showToast('✅ Application SMS ouverte', 'success');
+      } else {
+        showToast('✅ SMS enregistré dans l'historique (sélectionnez un élève pour envoi direct)', 'success');
+      }
+    } else if (canal === 'email') {
+      const email = (window._notifsEleves||[]).find(e=>e.id==document.getElementById('notif-eleve-id')?.value)?.email;
+      if (email) {
+        window.open(`mailto:${email}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(message)}`, '_blank');
+        showToast('✅ Client email ouvert', 'success');
+      } else {
+        showToast('✅ Email enregistré — sélectionnez un élève pour envoi direct', 'success');
+      }
+    } else {
+      showToast(`✅ Notification enregistrée`, 'success');
+    }
     closeNotifModal();
     loadNotifications();
   } catch(e) { showToast(e.message,'error'); }

@@ -118,3 +118,66 @@ async function supprimerDepense(id) {
   if (!confirm('Supprimer cette dépense ?')) return;
   try { await api.deleteDepense(id); toast('Dépense supprimée','ok'); loadDepenses(); } catch(e) { console.error('[depenses]', e); toast(e.message,'err'); }
 }
+
+function imprimerDepenseTicket(d) {
+  const school = document.querySelector('.top-school')?.textContent || 'MadrasaTech';
+  const win = window.open('','_blank','width=350,height=400');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>*{margin:0;padding:0}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;padding:10px}
+  .c{text-align:center}.b{font-weight:bold}.sep{border-top:1px dashed #000;margin:6px 0}
+  .row{display:flex;justify-content:space-between;padding:2px 0}
+  .total{display:flex;justify-content:space-between;font-weight:800;font-size:14px;border-top:2px solid #000;margin-top:4px;padding-top:4px}
+  @media print{@page{size:80mm auto;margin:3mm}}</style></head><body>
+  <div class="c b" style="font-size:15px">🏫 ${school}</div>
+  <div class="c" style="font-size:10px;margin:3px 0">Bon de dépense</div>
+  <div class="sep"></div>
+  <div class="row"><span>Date:</span><span>${d.date_depense||new Date().toLocaleDateString('fr-MA')}</span></div>
+  <div class="row"><span>Catégorie:</span><span>${d.categorie||'—'}</span></div>
+  <div class="row"><span>Libellé:</span></div>
+  <div style="font-weight:600;margin:4px 0">${d.libelle}</div>
+  ${d.fournisseur?`<div class="row"><span>Fournisseur:</span><span>${d.fournisseur}</span></div>`:''}
+  <div class="sep"></div>
+  <div class="total"><span>MONTANT</span><span>${(d.montant||0).toLocaleString('fr-MA')} MAD</span></div>
+  <div class="sep"></div>
+  <div class="c" style="font-size:10px">Signature: _______________</div>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),1000)}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function imprimerDepenseA4(d) {
+  const school = document.querySelector('.top-school')?.textContent || 'MadrasaTech';
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;padding:40px;color:#1e293b;font-size:13px}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;padding-bottom:20px;border-bottom:3px solid #ef4444}
+  .logo{font-size:24px;font-weight:900;color:#ef4444}.sub{font-size:12px;color:#94a3b8}
+  .box{background:#f8fafc;border-radius:12px;padding:24px;margin:20px 0;border:1px solid #e2e8f0}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+  .montant{background:#ef4444;color:#fff;border-radius:12px;padding:24px;text-align:center;margin:24px 0}
+  .montant-val{font-size:36px;font-weight:900}
+  .sign{text-align:center;width:160px;border-top:1px solid #e2e8f0;padding-top:8px;margin-top:40px;font-size:11px;color:#64748b}
+  @media print{body{padding:20px}@page{size:A4;margin:15mm}}</style></head><body>
+  <div class="header">
+    <div><div class="logo">📤 ${school}</div><div class="sub">Bon de Dépense</div></div>
+    <div style="text-align:right;font-size:14px;font-weight:700">Date: ${d.date_depense||new Date().toLocaleDateString('fr-MA')}</div>
+  </div>
+  <div class="box">
+    <div class="row"><span style="color:#64748b">Libellé</span><span style="font-weight:700">${d.libelle}</span></div>
+    <div class="row"><span style="color:#64748b">Catégorie</span><span>${d.categorie||'—'}</span></div>
+    ${d.fournisseur?`<div class="row"><span style="color:#64748b">Fournisseur</span><span>${d.fournisseur}</span></div>`:''}
+    ${d.notes?`<div class="row"><span style="color:#64748b">Notes</span><span>${d.notes}</span></div>`:''}
+  </div>
+  <div class="montant">
+    <div class="montant-val">${(d.montant||0).toLocaleString('fr-MA')} MAD</div>
+    <div style="font-size:12px;opacity:.7;margin-top:4px">Montant de la dépense</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:40px">
+    <div class="sign">Établi par</div>
+    <div class="sign">Approuvé par</div>
+    <div class="sign">Signature & Cachet</div>
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  win.document.close();
+}
