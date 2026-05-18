@@ -133,7 +133,7 @@ async function modifierFacture(id) {
 
 function renderFactModal(f={}) {
   const eleves = window._factEleves || [];
-  const titre = f.id ? '✏️ Modifier facture' : '🧾 Nouvelle facture';
+  const titre = f.id ? 'Modifier facture' : 'Nouvelle facture';
   const bodyHtml = `
   <div class="form-grid">
     <div class="form-group"><label class="form-label">Client / Nom *</label>
@@ -199,8 +199,10 @@ function renderFactModal(f={}) {
   </div>`;
 
   openModal(titre, bodyHtml, true);
-  renderItems();
-  calcTotal();
+  setTimeout(() => {
+    renderItems();
+    calcTotal();
+  }, 50);
 }
 
 function autoFillClient(sel) {
