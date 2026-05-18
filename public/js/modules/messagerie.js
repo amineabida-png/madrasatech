@@ -127,7 +127,9 @@ function renderMsgList(msgs) {
           <span class="msg2-item-from">${m.from_type === 'admin' ? 'Moi' : (m.from_type || '—')}</span>
           <span class="msg2-item-time">${time}</span>
         </div>
-        <div class="msg2-item-sujet ${isUnread ? 'msg2-item-sujet-bold' : ''}">${m.sujet || '(Sans sujet)'}</div>
+        <div class="msg2-item-sujet ${isUnread ? 'msg2-item-sujet-bold' : ''}">
+          ${m.fichier_nom ? '📎 ' : ''}${m.sujet || '(Sans sujet)'}
+        </div>
         <div class="msg2-item-preview">${preview}</div>
       </div>
       ${isUnread ? '<div class="msg2-unread-dot"></div>' : ''}
@@ -189,6 +191,16 @@ async function openMsg(id) {
     </div>
     <!-- Corps -->
     <div class="msg2-detail-body">${(m.contenu||'').replace(/\n/g,'<br>')}</div>
+    <!-- Pièce jointe -->
+    ${m.fichier_nom ? `
+    <div class="msg2-attachment" onclick="telechargerMsgFichier(${m.id},'${m.fichier_nom}','${m.fichier_type||''}')">
+      <div class="msg2-attach-icon">${m.fichier_type?.startsWith('image/')?'🖼️':m.fichier_nom?.endsWith('.pdf')?'📄':'📎'}</div>
+      <div class="msg2-attach-info">
+        <div class="msg2-attach-nom">${m.fichier_nom}</div>
+        <div class="msg2-attach-action">Cliquer pour ouvrir</div>
+      </div>
+      <span class="msg2-attach-dl">⬇️</span>
+    </div>` : ''}
     <!-- Répondre rapide -->
     <div class="msg2-reply-bar">
       <div class="msg2-reply-av av-blue">${(window.currentUser?.prenom||'A').charAt(0).toUpperCase()}</div>
@@ -236,12 +248,36 @@ function ouvrirCompose(toId=null, toName=null, toRole=null, replySubject=null, p
   </div>
   <div class="form-group">
     <label class="form-label">Message *</label>
-    <textarea class="form-control" id="msg-contenu" rows="6" placeholder="Rédigez votre message…" style="resize:vertical"></textarea>
+    <textarea class="form-control" id="msg-contenu" rows="5" placeholder="Rédigez votre message…" style="resize:vertical"></textarea>
+  </div>
+  <div class="form-group">
+    <label class="form-label">📎 Pièce jointe (optionnel)</label>
+    <div class="msg-attach-zone" id="msg-attach-zone" onclick="document.getElementById('msg-fichier').click()">
+      <input type="file" id="msg-fichier" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" style="display:none" onchange="onMsgFichier(this)">
+      <div id="msg-attach-preview" class="msg-attach-placeholder">
+        <span style="font-size:1.8rem">📎</span>
+        <span>Cliquer ou glisser un fichier</span>
+        <span style="font-size:11px;color:#94a3b8">PDF, Image, Word, Excel — max 10 MB</span>
+      </div>
+    </div>
   </div>
   <div class="form-actions">
     <button class="btn btn-ghost" onclick="closeCompose()">Annuler</button>
     <button class="btn btn-primary" onclick="sendMsg(${parentId||'null'})">📤 Envoyer</button>
   </div>`;
+
+  // Setup drag & drop
+  setTimeout(() => {
+    const zone = document.getElementById('msg-attach-zone');
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('msg-attach-drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('msg-attach-drag'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('msg-attach-drag');
+      const f = e.dataTransfer.files[0];
+      if (f) { document.getElementById('msg-fichier').files = e.dataTransfer.files; onMsgFichier({files: e.dataTransfer.files}); }
+    });
+  }, 100);
   document.getElementById('compose-modal').style.display = 'flex';
   setTimeout(() => document.getElementById('msg-contenu')?.focus(), 100);
 }
@@ -260,6 +296,51 @@ async function envoyerReponse(parentId, sujet) {
   } catch(e) { showToast(e.message,'error'); }
 }
 
+function onMsgFichier(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('Fichier trop lourd (max 10 MB)','error'); return; }
+  const preview = document.getElementById('msg-attach-preview');
+  if (!preview) return;
+  const isImg = file.type.startsWith('image/');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icons = { pdf:'📄', doc:'📝', docx:'📝', xls:'📊', xlsx:'📊', txt:'📃', zip:'🗜️' };
+  if (isImg) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.innerHTML = `
+      <div class="msg-attach-file-preview">
+        <img src="${e.target.result}" style="max-height:80px;border-radius:8px;object-fit:contain">
+        <div class="msg-attach-file-info">
+          <span style="font-weight:600">${file.name}</span>
+          <span style="color:#94a3b8">${(file.size/1024).toFixed(0)} KB</span>
+          <button class="btn btn-sm" style="color:#ef4444;background:#fef2f2;border:1px solid #fecaca;padding:4px 10px" onclick="supprimerFichierMsg(event)">✕ Retirer</button>
+        </div>
+      </div>`;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = `
+    <div class="msg-attach-file-preview">
+      <span style="font-size:2rem">${icons[ext]||'📎'}</span>
+      <div class="msg-attach-file-info">
+        <span style="font-weight:600">${file.name}</span>
+        <span style="color:#94a3b8">${(file.size/1024).toFixed(0)} KB</span>
+        <button class="btn btn-sm" style="color:#ef4444;background:#fef2f2;border:1px solid #fecaca;padding:4px 10px" onclick="supprimerFichierMsg(event)">✕ Retirer</button>
+      </div>
+    </div>`;
+  }
+}
+
+function supprimerFichierMsg(e) {
+  e.stopPropagation();
+  document.getElementById('msg-fichier').value = '';
+  document.getElementById('msg-attach-preview').innerHTML = `
+    <span style="font-size:1.8rem">📎</span>
+    <span>Cliquer ou glisser un fichier</span>
+    <span style="font-size:11px;color:#94a3b8">PDF, Image, Word, Excel — max 10 MB</span>`;
+}
+
 async function sendMsg(parentId) {
   const sel    = document.getElementById('msg-to');
   const toId   = sel.value || null;
@@ -268,7 +349,22 @@ async function sendMsg(parentId) {
   const contenu= document.getElementById('msg-contenu').value.trim();
   if (!sujet || !contenu) return showToast('Sujet et message requis','error');
   try {
-    await api.post('/messages', { to_id:toId, to_type:toType, sujet, contenu, parent_id:parentId });
+    const fichierInput = document.getElementById('msg-fichier');
+    const token = localStorage.getItem('mt_token');
+    if (fichierInput?.files?.[0]) {
+      const fd = new FormData();
+      fd.append('to_id', toId||'');
+      fd.append('to_type', toType);
+      fd.append('sujet', sujet);
+      fd.append('contenu', contenu);
+      if (parentId) fd.append('parent_id', parentId);
+      fd.append('fichier', fichierInput.files[0]);
+      const r = await fetch('/api/messages', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+    } else {
+      await api.post('/messages', { to_id:toId, to_type:toType, sujet, contenu, parent_id:parentId });
+    }
     showToast('✅ Message envoyé !','success');
     closeCompose();
     _msgs = await api.get('/messages');
@@ -286,6 +382,22 @@ async function supprimerMsg(id) {
     document.getElementById('msg2-main').innerHTML = `<div class="msg2-empty-state"><div class="msg2-empty-icon">💬</div><div class="msg2-empty-title">Sélectionnez un message</div></div>`;
     _activeMsg = null;
   } catch(e) { showToast(e.message,'error'); }
+}
+
+async function telechargerMsgFichier(id, nom, type) {
+  const token = localStorage.getItem('mt_token');
+  const r = await fetch('/api/messages/'+id+'/fichier', { headers:{'Authorization':'Bearer '+token} });
+  if (!r.ok) return showToast('Fichier non disponible','error');
+  const blob = await r.blob();
+  const url  = URL.createObjectURL(blob);
+  // Preview images in new tab, download others
+  if (type.startsWith('image/') || type === 'application/pdf') {
+    window.open(url, '_blank');
+  } else {
+    const a = document.createElement('a');
+    a.href = url; a.download = nom; a.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 function closeCompose() { document.getElementById('compose-modal').style.display='none'; }

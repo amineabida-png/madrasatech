@@ -1057,3 +1057,19 @@ select.filter-input { background: #fff; cursor: pointer; }
   .msg2-detail-header { flex-direction:column;gap:10px; }
   .msg2-detail-actions { width:100%;justify-content:flex-end; }
 }
+
+/* ══ MESSAGERIE — PIÈCES JOINTES ════════════════════════════════ */
+.msg-attach-zone { border:2px dashed #e2e8f0;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;min-height:90px;display:flex;align-items:center;justify-content:center; }
+.msg-attach-zone:hover,.msg-attach-drag { border-color:#6366f1;background:#f5f3ff; }
+.msg-attach-placeholder { display:flex;flex-direction:column;align-items:center;gap:6px;color:#94a3b8;font-size:13px; }
+.msg-attach-file-preview { display:flex;align-items:center;gap:14px;padding:8px; }
+.msg-attach-file-info { display:flex;flex-direction:column;gap:4px;text-align:left;font-size:13px; }
+
+/* Pièce jointe dans le détail */
+.msg2-attachment { display:flex;align-items:center;gap:12px;margin:0 24px 16px;padding:14px 16px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:.2s; }
+.msg2-attachment:hover { border-color:#6366f1;background:#eff6ff; }
+.msg2-attach-icon { font-size:2rem;flex-shrink:0; }
+.msg2-attach-info { flex:1;min-width:0; }
+.msg2-attach-nom { font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.msg2-attach-action { font-size:12px;color:#64748b;margin-top:2px; }
+.msg2-attach-dl { font-size:1.3rem;flex-shrink:0; }

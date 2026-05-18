@@ -1257,12 +1257,24 @@ app.get('/api/messages/non-lus', auth, (req, res) => {
   res.json({ count: count.n });
 });
 
-app.post('/api/messages', auth, (req, res) => {
+app.post('/api/messages', auth, upload.single('fichier'), (req, res) => {
   const { to_id, to_type, sujet, contenu, parent_id } = req.body;
   if (!sujet || !contenu) return res.status(400).json({ error: 'Sujet et contenu requis' });
-  db.prepare('INSERT INTO messages (owner_id,from_id,from_type,to_id,to_type,sujet,contenu,parent_id) VALUES (?,?,?,?,?,?,?,?)')
-    .run(req.user.id, req.user.id, req.user.role||'admin', to_id||null, to_type||'tous', sujet, contenu, parent_id||null);
+  const fichierNom  = req.file ? req.file.originalname : null;
+  const fichierData = req.file ? req.file.buffer.toString('base64') : null;
+  const fichierType = req.file ? req.file.mimetype : null;
+  db.prepare('INSERT INTO messages (owner_id,from_id,from_type,to_id,to_type,sujet,contenu,parent_id,fichier_nom,fichier_data,fichier_type) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+    .run(req.user.id, req.user.id, req.user.role||'admin', to_id||null, to_type||'tous', sujet, contenu, parent_id||null, fichierNom, fichierData, fichierType);
   res.json({ ok: true });
+});
+
+app.get('/api/messages/:id/fichier', auth, (req, res) => {
+  const m = db.prepare('SELECT fichier_nom,fichier_data,fichier_type FROM messages WHERE id=? AND owner_id=?').get(req.params.id, req.user.id);
+  if (!m || !m.fichier_data) return res.status(404).json({ error: 'Aucun fichier' });
+  const buf = Buffer.from(m.fichier_data, 'base64');
+  res.set('Content-Type', m.fichier_type || 'application/octet-stream');
+  res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(m.fichier_nom)}"`);
+  res.send(buf);
 });
 
 app.put('/api/messages/:id/lu', auth, (req, res) => {
